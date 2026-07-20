@@ -1,0 +1,71 @@
+<div class="space-y-8">
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="tile px-4 py-4 flex items-center gap-3">
+            <div class="w-10 h-10 bg-primary/10 flex items-center justify-center shrink-0">
+                <app-icon name="zap" [size]="20" class="text-primary" />
+            </div>
+            <div>
+                <p class="text-[10px] text-muted-foreground leading-none mb-1">Consumo Acumulado</p>
+                <p class="text-[17px] font-bold text-foreground tabular-nums">{{ fmtKwh(energy().totalKwh) }} kWh</p>
+            </div>
+        </div>
+        <div class="tile px-4 py-4 flex items-center gap-3">
+            <div class="w-10 h-10 bg-[var(--status-yellow)]/15 flex items-center justify-center shrink-0">
+                <app-icon name="bar-chart-3" [size]="20" class="text-[var(--status-yellow)]" />
+            </div>
+            <div>
+                <p class="text-[10px] text-muted-foreground leading-none mb-1">Custo Acumulado</p>
+                <p class="text-[17px] font-bold text-foreground tabular-nums">{{ fmtCost(energy().totalCost) }}</p>
+            </div>
+        </div>
+        <div class="tile px-4 py-4 flex items-center gap-3">
+            <div class="w-10 h-10 bg-[var(--status-green)]/10 flex items-center justify-center shrink-0">
+                <app-icon name="gauge" [size]="20" class="text-[var(--status-green)]" />
+            </div>
+            <div>
+                <p class="text-[10px] text-muted-foreground leading-none mb-1">Custo Médio / Máquina</p>
+                <p class="text-[17px] font-bold text-foreground tabular-nums">
+                    {{ fmtCost(energy().totalCost / (lathes().length || 1)) }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="tile px-4 py-3 flex items-start gap-3">
+        <app-icon name="alert-circle" [size]="16" class="text-muted-foreground shrink-0 mt-0.5" />
+        <p class="text-[12px] text-muted-foreground leading-relaxed">
+            Estimativa aproximada sobre o total de horas trabalhadas de cada torno — considera potência média de
+            {{ assumptions.avgPowerKw }} kW e tarifa de {{ fmtTariff(assumptions.tariffPerKwh) }}/kWh. O hardware ainda
+            não envia consumo de energia real; substituir por leitura de medidor quando disponível.
+        </p>
+    </div>
+
+    <div>
+        <h3 class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Maiores Consumidoras
+        </h3>
+        <div class="space-y-2">
+            @for (m of energy().perMachine.slice(0, 8); track m.id; let i = $index) {
+            <button
+                (click)="openCost.emit(m.id)"
+                class="w-full tile flex items-center gap-4 px-4 py-3 hover:bg-secondary/40 transition-colors text-left group"
+            >
+                <span class="text-[11px] font-bold text-muted-foreground w-4 shrink-0">#{{ i + 1 }}</span>
+                <div class="flex-1 min-w-0">
+                    <p class="text-[13px] font-semibold text-foreground truncate">{{ m.name }}</p>
+                    <p class="text-[11px] text-muted-foreground truncate">{{ m.model }} · {{ m.sector }}</p>
+                </div>
+                <div class="text-right shrink-0">
+                    <p class="text-[13px] font-bold text-foreground tabular-nums">{{ fmtCost(m.cost) }}</p>
+                    <p class="text-[11px] text-muted-foreground tabular-nums">{{ fmtKwh(m.kwh) }} kWh</p>
+                </div>
+                <app-icon
+                    name="arrow-right"
+                    [size]="16"
+                    class="text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0"
+                />
+            </button>
+            }
+        </div>
+    </div>
+</div>

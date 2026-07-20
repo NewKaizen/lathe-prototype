@@ -1,0 +1,124 @@
+<div class="space-y-8">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <button
+            (click)="navigate.emit('overview')"
+            class="tile px-4 py-4 flex items-center gap-3 text-left hover:bg-secondary/40 transition-colors"
+        >
+            <div class="w-10 h-10 bg-[var(--status-green)]/10 flex items-center justify-center shrink-0">
+                <app-icon name="trending-up" [size]="20" class="text-[var(--status-green)]" />
+            </div>
+            <div>
+                <p class="text-[10px] text-muted-foreground leading-none mb-1">Eficiência Média</p>
+                <p class="text-[17px] font-bold text-foreground tabular-nums">{{ overview().avgEfficiency }}%</p>
+            </div>
+        </button>
+        <button
+            (click)="navigate.emit('alerts')"
+            class="tile px-4 py-4 flex items-center gap-3 text-left hover:bg-secondary/40 transition-colors"
+        >
+            <div class="w-10 h-10 bg-[var(--status-red)]/10 flex items-center justify-center shrink-0">
+                <app-icon name="alert-triangle" [size]="20" class="text-[var(--status-red)]" />
+            </div>
+            <div>
+                <p class="text-[10px] text-muted-foreground leading-none mb-1">Alertas Ativos</p>
+                <p class="text-[17px] font-bold text-foreground tabular-nums">{{ alertCount() }}</p>
+            </div>
+        </button>
+        <button
+            (click)="navigate.emit('maintenance')"
+            class="tile px-4 py-4 flex items-center gap-3 text-left hover:bg-secondary/40 transition-colors"
+        >
+            <div class="w-10 h-10 bg-[var(--status-purple)]/10 flex items-center justify-center shrink-0">
+                <app-icon name="calendar" [size]="20" class="text-[var(--status-purple)]" />
+            </div>
+            <div>
+                <p class="text-[10px] text-muted-foreground leading-none mb-1">Manutenções em 7 dias</p>
+                <p class="text-[17px] font-bold text-foreground tabular-nums">{{ maintenanceDueSoon() }}</p>
+            </div>
+        </button>
+        <div class="tile px-4 py-4 flex items-center gap-3">
+            <div class="w-10 h-10 bg-primary/10 flex items-center justify-center shrink-0">
+                <app-icon name="clock" [size]="20" class="text-primary" />
+            </div>
+            <div>
+                <p class="text-[10px] text-muted-foreground leading-none mb-1">Horas Totais</p>
+                <p class="text-[17px] font-bold text-foreground tabular-nums">{{ overview().totalHours }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <h3 class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Processos em Andamento
+        </h3>
+        @if (processesInProgress().length > 0) {
+        <div class="space-y-2">
+            @for (l of processesInProgress(); track l.id) {
+            <button
+                (click)="select.emit(l)"
+                class="w-full tile flex items-center gap-4 px-4 py-3 hover:bg-secondary/40 transition-colors text-left group"
+            >
+                <app-icon name="chart-line" [size]="16" class="text-primary shrink-0" />
+                <div class="flex-1 min-w-0">
+                    <p class="text-[13px] font-semibold text-foreground truncate">{{ l.name }}</p>
+                    <p class="text-[11px] text-muted-foreground truncate">{{ l.sector }} · {{ l.currentProcess }}</p>
+                </div>
+                <app-icon
+                    name="arrow-right"
+                    [size]="16"
+                    class="text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0"
+                />
+            </button>
+            }
+        </div>
+        } @else {
+        <div class="tile px-4 py-6 text-center">
+            <p class="text-[13px] text-muted-foreground">Nenhum processo em andamento registrado no momento.</p>
+        </div>
+        }
+    </div>
+
+    <div>
+        <h3 class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Relatórios Individuais
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button
+                (click)="openReport.emit('efficiency')"
+                class="tile px-4 py-3 flex items-center gap-3 hover:bg-secondary/40 transition-colors text-left group"
+            >
+                <app-icon name="file-text" [size]="18" class="text-primary shrink-0" />
+                <span class="text-[13px] font-semibold text-foreground flex-1">Eficiência da Frota</span>
+                <app-icon
+                    name="arrow-right"
+                    [size]="14"
+                    class="text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0"
+                />
+            </button>
+            <button
+                (click)="openReport.emit('maintenance')"
+                class="tile px-4 py-3 flex items-center gap-3 hover:bg-secondary/40 transition-colors text-left group"
+            >
+                <app-icon name="file-text" [size]="18" class="text-primary shrink-0" />
+                <span class="text-[13px] font-semibold text-foreground flex-1">Manutenções do Período</span>
+                <app-icon
+                    name="arrow-right"
+                    [size]="14"
+                    class="text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0"
+                />
+            </button>
+            <button
+                (click)="openReport.emit('alerts')"
+                class="tile px-4 py-3 flex items-center gap-3 hover:bg-secondary/40 transition-colors text-left group"
+            >
+                <app-icon name="file-text" [size]="18" class="text-primary shrink-0" />
+                <span class="text-[13px] font-semibold text-foreground flex-1">Histórico de Alertas</span>
+                <app-icon
+                    name="arrow-right"
+                    [size]="14"
+                    class="text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0"
+                />
+            </button>
+        </div>
+    </div>
+</div>

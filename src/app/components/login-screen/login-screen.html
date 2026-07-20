@@ -1,0 +1,156 @@
+<div class="min-h-screen w-full bg-background flex flex-col selection:bg-primary/20 relative overflow-hidden">
+    <!-- Manchas de cor desfocadas, emergindo das laterais — único toque de glassmorfismo,
+         restrito a esta tela. O resto do app segue flat/Carbon (ver theme.css). -->
+    <div class="pointer-events-none absolute -left-28 -top-20 w-[26rem] h-[26rem] rounded-full bg-primary/25 blur-[110px]"></div>
+    <div
+        class="pointer-events-none absolute -left-16 bottom-[-6rem] w-[22rem] h-[22rem] rounded-full blur-[110px]"
+        style="background: var(--status-purple); opacity: 0.18"
+    ></div>
+    <div
+        class="pointer-events-none absolute -right-24 top-1/3 hidden lg:block w-[24rem] h-[24rem] rounded-full blur-[110px]"
+        style="background: var(--status-green); opacity: 0.14"
+    ></div>
+
+    <!-- Main split -->
+    <div class="flex-1 flex flex-col lg:flex-row min-h-screen relative z-10">
+        <!-- Left: photo panel — a imagem toca as bordas superior, esquerda e inferior da tela -->
+        <div class="hidden lg:block shrink-0 w-[clamp(24rem,40vw,42rem)] relative overflow-hidden">
+            <img
+                src="https://images.unsplash.com/photo-1748640857973-93524ef0fe7d?w=1200&q=80&fm=jpg&fit=crop"
+                alt="Maquinista operando um torno mecânico na oficina"
+                class="absolute inset-0 w-full h-full object-cover grayscale"
+            />
+        </div>
+
+        <!-- Right: headline + form -->
+        <div class="flex-1 flex flex-col items-center justify-center px-6 py-16">
+            <div class="w-full max-w-lg" [class.animate-shake]="shake()">
+                <div class="flex items-center gap-2 mb-8">
+                    <div class="w-7 h-7 bg-foreground flex items-center justify-center shrink-0">
+                        <app-icon name="activity" [size]="16" class="text-background" />
+                    </div>
+                    <span class="text-[15px] font-semibold text-foreground">senai digital</span>
+                </div>
+
+                <h1 class="text-[36px] sm:text-5xl leading-[1.15]">
+                    <span class="font-light text-foreground">Experiência humana,</span><br />
+                    <span class="font-semibold text-foreground">precisão digital.</span>
+                </h1>
+                <p class="text-muted-foreground mt-5 text-[15px] text-pretty">
+                    Telemetria em tempo real de cada torno operado pela equipe do Bloco D — vibração, temperatura e
+                    eficiência, sempre à vista.
+                </p>
+
+                <div
+                    class="mt-10 p-8 text-left border border-border/70"
+                    style="background: color-mix(in srgb, var(--card) 70%, transparent); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px)"
+                >
+                    <form (ngSubmit)="onSubmit()" class="space-y-5">
+                        <div class="space-y-1.5">
+                            <label class="text-overline text-muted-foreground">Usuário</label>
+                            <input
+                                type="text"
+                                name="username"
+                                [ngModel]="username()"
+                                (ngModelChange)="username.set($event); error.set('')"
+                                placeholder="Digite seu usuário"
+                                autocomplete="username"
+                                autofocus
+                                class="input-field"
+                                [class.input-field-error]="error()"
+                            />
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-overline text-muted-foreground">Senha</label>
+                            <div class="relative">
+                                <input
+                                    [type]="showPassword() ? 'text' : 'password'"
+                                    name="password"
+                                    [ngModel]="password()"
+                                    (ngModelChange)="password.set($event); error.set('')"
+                                    placeholder="Digite sua senha"
+                                    autocomplete="current-password"
+                                    class="input-field pr-11"
+                                    [class.input-field-error]="error()"
+                                />
+                                <button
+                                    type="button"
+                                    (click)="showPassword.set(!showPassword())"
+                                    [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors duration-150 p-1"
+                                >
+                                    <app-icon [name]="showPassword() ? 'eye-off' : 'eye'" [size]="16" />
+                                </button>
+                            </div>
+                        </div>
+
+                        @if (error()) {
+                        <div
+                            class="flex items-center gap-2 px-3 py-2.5 border-l-[3px] border-[var(--support-error)] bg-[var(--support-error)]/8"
+                        >
+                            <app-icon name="alert-circle" [size]="16" class="text-[var(--support-error)] shrink-0" />
+                            <p class="text-[13px] text-[var(--support-error)]">{{ error() }}</p>
+                        </div>
+                        }
+
+                        <button
+                            type="submit"
+                            [disabled]="loading() || !username() || !password()"
+                            class="w-full h-12 mt-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-[15px] flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                        >
+                            @if (loading()) {
+                            <span
+                                class="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin"
+                            ></span>
+                            } @else {
+                            <app-icon name="log-in" [size]="16" />
+                            Entrar }
+                        </button>
+                    </form>
+                </div>
+
+                <div class="mt-7">
+                    <button
+                        type="button"
+                        (click)="showDemoAccess.set(!showDemoAccess())"
+                        [attr.aria-expanded]="showDemoAccess()"
+                        class="w-full flex items-center justify-center gap-1.5 py-2 text-[12px] font-medium text-muted-foreground/70 hover:text-muted-foreground transition-colors"
+                    >
+                        Ambiente de demonstração
+                        <app-icon
+                            name="chevron-down"
+                            [size]="14"
+                            class="transition-transform duration-200"
+                            [style.transform]="showDemoAccess() ? 'rotate(180deg)' : ''"
+                        />
+                    </button>
+
+                    <!-- MOCK: condicionar a environment.demoMode antes de qualquer deploy. -->
+                    @if (showDemoAccess()) {
+                    <div class="mt-1 p-3.5 tile flex items-start justify-between gap-3 text-left animate-fade-in">
+                        <div>
+                            <p class="text-overline text-muted-foreground mb-1">Acesso pré-configurado (demo)</p>
+                            <p class="text-[13px] text-foreground">
+                                <span class="font-medium">Usuário:</span>
+                                <span class="font-mono font-semibold text-foreground">admin</span>
+                            </p>
+                            <p class="text-[13px] text-foreground">
+                                <span class="font-medium">Senha:</span>
+                                <span class="font-mono font-semibold text-foreground">admin123</span>
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            (click)="fillCredentials()"
+                            class="shrink-0 text-[12px] font-semibold text-primary hover:text-primary/70 px-3 py-1.5 transition-colors border border-primary mt-0.5"
+                        >
+                            Preencher
+                        </button>
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

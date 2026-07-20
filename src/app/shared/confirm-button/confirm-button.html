@@ -1,0 +1,18 @@
+<!--
+    Estado normal: fundo vermelho tênue + texto vermelho (mesmo estilo do botão Cancelar original).
+    Estado armado: fundo vermelho mais intenso + texto + borda, pulso visual para indicar "aguardando 2º clique".
+    Transição suave entre estados via transition-all.
+    Consistente com Carbon: sem sombra, sem glass, profundidade via cor de borda e background.
+-->
+<button
+    type="button"
+    (click)="onClick()"
+    class="flex-1 h-8 text-[12px] font-semibold transition-all duration-150"
+    [class]="armed()
+        ? 'bg-[var(--status-red)]/20 text-[var(--status-red)] border border-[var(--status-red)]/40 animate-pulse'
+        : 'bg-[var(--status-red)]/10 text-[var(--status-red)] hover:bg-[var(--status-red)]/15'"
+    [attr.aria-pressed]="armed()"
+    [attr.aria-label]="armed() ? confirmLabel() : label()"
+>
+    {{ armed() ? confirmLabel() : label() }}
+</button>

@@ -1,0 +1,33 @@
+<!-- Mapa esquemático por setor — layout físico real ainda depende de asset de design (Figma). -->
+<div class="space-y-4">
+    <p class="text-[13px] text-muted-foreground -mt-2">
+        Mapa esquemático por linha. O layout físico exato da planta ainda depende do protótipo Figma — por enquanto,
+        cada zona representa uma linha de produção.
+    </p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        @for (entry of plantSectors(); track entry[0]) {
+        <div class="tile p-5">
+            <div class="flex items-center gap-2 mb-4">
+                <app-icon name="factory" [size]="16" class="text-primary shrink-0" />
+                <span class="text-[14px] font-semibold text-foreground">{{ entry[0] }}</span>
+                <span class="text-[12px] text-muted-foreground"
+                    >{{ entry[1].length }} máquina{{ entry[1].length !== 1 ? 's' : '' }}</span
+                >
+            </div>
+            <div class="flex flex-wrap gap-2">
+                @for (l of entry[1]; track l.id) {
+                <button
+                    type="button"
+                    (click)="select.emit(l)"
+                    [attr.title]="l.name + ' — ' + STATUS_META[l.status].label"
+                    class="flex items-center gap-1.5 px-3 py-2 border border-border/60 bg-secondary/40 hover:bg-secondary transition-colors text-left"
+                >
+                    <span class="w-2 h-2 rounded-full shrink-0" [class]="STATUS_META[l.status].dot"></span>
+                    <span class="text-[12px] font-semibold text-foreground">{{ l.id }}</span>
+                </button>
+                }
+            </div>
+        </div>
+        }
+    </div>
+</div>

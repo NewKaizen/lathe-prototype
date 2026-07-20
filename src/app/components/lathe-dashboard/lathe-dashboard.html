@@ -1,0 +1,153 @@
+<div class="space-y-5">
+    <div class="flex items-center justify-between gap-3 px-0.5">
+        <p class="text-[13px] text-muted-foreground">{{ latheData().model }}</p>
+        <span class="shrink-0" [class]="meta().badge">{{ meta().label }}</span>
+    </div>
+
+    <div class="grid grid-cols-1 min-[400px]:grid-cols-2 gap-3">
+        <div class="tile p-6 relative">
+            <p class="text-overline text-muted-foreground mb-4">Score de Operação</p>
+            <div class="mb-5 flex items-center gap-3">
+                <span class="text-6xl metric-display text-foreground tabular-nums">{{ eff() }}</span>
+                <span [class]="scoreTagClass()">{{ scoreLabel() }}</span>
+            </div>
+            <div class="flex justify-between text-[10px] font-medium text-muted-foreground mb-1.5">
+                <span>Risco Geral</span>
+                <span class="tabular-nums">{{ 100 - eff() }}%</span>
+            </div>
+            <div class="flex gap-0.5 h-1.5">
+                @for (on of dots(); track $index) {
+                <div
+                    class="flex-1 bg-primary transition-opacity duration-300"
+                    [style.opacity]="on ? 0.9 : 0.15"
+                ></div>
+                }
+            </div>
+        </div>
+
+        <div class="tile p-6 relative">
+            <p class="text-overline text-muted-foreground mb-4">Índice de Anomalia</p>
+            <div class="mb-4 flex items-center gap-3">
+                <span class="text-6xl metric-display text-foreground tabular-nums">{{ aScore() }}</span>
+                <span [class]="meta().badge">{{ meta().label }}</span>
+            </div>
+            <div class="flex items-end gap-0.5 h-9">
+                @for (h of anomalyBars(); track $index) {
+                <div class="flex-1 bg-primary/60 transition-all duration-500" [style.height.%]="h"></div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="flex items-center justify-between mb-3 px-0.5">
+            <div>
+                <h3 class="text-[15px] font-semibold text-foreground">Sensores ELT</h3>
+                <p class="text-[11px] text-muted-foreground">Snapshot do que acontece dentro da máquina</p>
+            </div>
+            <span class="tag tag-blue">Ao vivo</span>
+        </div>
+
+        <div class="grid grid-cols-1 min-[400px]:grid-cols-2 gap-3">
+            @for (c of sensorCards(); track c.label) {
+            <div class="tile tile-interactive p-4" [attr.aria-label]="c.caption + ': ' + c.value + ' ' + c.unit">
+                <div class="flex justify-between items-start mb-3">
+                    <app-icon
+                        [name]="c.icon"
+                        [size]="16"
+                        class="transition-colors duration-300"
+                        [style.color]="colorFor(c)"
+                    />
+                    <app-icon name="more-horizontal" [size]="16" class="text-muted-foreground/50" />
+                </div>
+                <div class="flex items-baseline gap-1">
+                    <span
+                        class="text-[2rem] metric-display leading-none tabular-nums transition-colors duration-300"
+                        [style.color]="colorFor(c)"
+                        >{{ c.value }}</span
+                    >
+                    <span class="text-[10px] text-muted-foreground">{{ c.unit }}</span>
+                </div>
+                <p class="text-[10px] text-muted-foreground mt-1">{{ c.caption }}</p>
+                <svg
+                    class="w-full h-8 mt-3"
+                    viewBox="0 0 100 30"
+                    preserveAspectRatio="none"
+                    fill="none"
+                    stroke-width="2.5"
+                    [attr.stroke]="strokeFor(c)"
+                    aria-hidden="true"
+                >
+                    <path [attr.d]="c.path" stroke-linecap="round" stroke-linejoin="round" opacity="0.85" />
+                </svg>
+            </div>
+            }
+        </div>
+    </div>
+
+    <div class="tile tile-interactive p-5" title="Ilustrativo — antecipa o formato do futuro OperationalState (Gate 2)">
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-[13px] font-semibold text-foreground flex items-center gap-1.5">
+                <app-icon name="cpu" [size]="14" class="text-primary" /> Estado Operacional
+            </span>
+            <span class="text-[10px] text-muted-foreground/60 italic">ilustrativo</span>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <p class="text-[10px] text-muted-foreground uppercase tracking-widest">Modo</p>
+                <p class="text-[14px] font-semibold text-foreground">
+                    {{ modeLabel[operationalState().modoOperacao] }}
+                </p>
+            </div>
+            <div>
+                <p class="text-[10px] text-muted-foreground uppercase tracking-widest">Saúde</p>
+                <p class="text-[14px] font-semibold text-foreground">
+                    {{ healthLabel[operationalState().estadoSaude] }}
+                </p>
+            </div>
+        </div>
+        @if (operationalState().flagsAtivas.length > 0) {
+        <div class="flex flex-wrap gap-1.5 mt-3">
+            @for (flag of operationalState().flagsAtivas; track flag) {
+            <span class="tag tag-yellow">{{ flag }}</span>
+            }
+        </div>
+        }
+    </div>
+
+    @if (latheData().sensors && latheData().sensors!.length > 0) {
+    <div class="tile tile-interactive p-5">
+        <p class="text-[13px] font-semibold text-foreground mb-3">Sensores Instalados</p>
+        <div class="space-y-2">
+            @for (s of latheData().sensors; track s.id) {
+            <div class="flex items-center justify-between py-1.5 border-b border-border/40 last:border-b-0">
+                <span class="flex items-center gap-2.5 min-w-0">
+                    <app-icon [name]="sensorIcon(s.type)" [size]="14" class="text-primary shrink-0" />
+                    <span class="text-[12px] font-medium text-foreground/80 truncate">{{ s.name }}</span>
+                </span>
+                <span class="text-[11px] text-muted-foreground shrink-0 ml-2">{{ s.location }} · {{ s.unit }}</span>
+            </div>
+            }
+        </div>
+    </div>
+    }
+
+    <div class="tile px-5 py-4 flex items-center justify-between">
+        <div>
+            <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Próxima Manutenção</p>
+            <p class="text-[22px] font-light tracking-tight text-foreground tabular-nums">
+                {{ latheData().nextMaintenance }}
+            </p>
+        </div>
+        <div class="text-right space-y-2">
+            <div>
+                <p class="text-[10px] text-muted-foreground uppercase tracking-wider">Última</p>
+                <p class="text-[13px] font-medium text-foreground tabular-nums">{{ latheData().lastMaintenance }}</p>
+            </div>
+            <div>
+                <p class="text-[10px] text-muted-foreground uppercase tracking-wider">Horas</p>
+                <p class="text-[13px] font-medium text-foreground tabular-nums">{{ hoursWorkedFormatted() }}h</p>
+            </div>
+        </div>
+    </div>
+</div>

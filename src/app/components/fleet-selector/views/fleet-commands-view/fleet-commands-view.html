@@ -1,0 +1,68 @@
+<div class="space-y-8">
+    <div class="tile p-5">
+        <p class="text-[13px] text-muted-foreground leading-relaxed">
+            A busca no topo da tela Início aceita três prefixos, no estilo do Command Palette do VS Code. Digite o
+            símbolo e comece a escrever — os resultados filtram automaticamente. Sem prefixo, a busca combina páginas,
+            ações e tornos ao mesmo tempo.
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        @for (rule of syntaxRules; track rule.symbol) {
+        <div class="tile p-5">
+            <span
+                class="inline-flex items-center justify-center w-9 h-9 bg-primary/10 text-primary font-mono font-bold text-[18px] mb-3"
+            >
+                {{ rule.symbol }}
+            </span>
+            <h3 class="text-[15px] font-semibold text-foreground mb-1">{{ rule.title }}</h3>
+            <p class="text-[13px] text-muted-foreground leading-relaxed mb-3">{{ rule.description }}</p>
+            <code class="text-[12px] font-mono bg-secondary px-2 py-1 text-foreground">{{ rule.example }}</code>
+        </div>
+        }
+    </div>
+
+    <div>
+        <h3 class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Páginas ( <span class="font-mono normal-case">:</span> )
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            @for (p of pages; track p.id) {
+            <div class="tile px-4 py-3 flex items-center gap-3">
+                <app-icon [name]="p.icon" [size]="16" class="text-primary shrink-0" />
+                <span class="text-[13px] font-medium text-foreground flex-1">{{ p.label }}</span>
+                <code class="text-[11px] font-mono text-muted-foreground shrink-0">{{ p.hint }}</code>
+            </div>
+            }
+        </div>
+    </div>
+
+    <div>
+        <h3 class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Ações ( <span class="font-mono normal-case">&gt;</span> )
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            @for (a of actions; track a.id) {
+            <div class="tile px-4 py-3 flex items-center gap-3">
+                <app-icon [name]="a.icon" [size]="16" class="text-[var(--status-purple)] shrink-0" />
+                <span class="text-[13px] font-medium text-foreground flex-1">{{ a.label }}</span>
+                <code class="text-[11px] font-mono text-muted-foreground shrink-0">{{ a.hint }}</code>
+            </div>
+            }
+        </div>
+    </div>
+
+    <div>
+        <h3 class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Tornos ( <span class="font-mono normal-case">&lt;</span> )
+        </h3>
+        <div class="tile px-4 py-3 flex items-center gap-3">
+            <app-icon name="box" [size]="16" class="text-muted-foreground shrink-0" />
+            <p class="text-[13px] text-muted-foreground">
+                Digite <span class="font-mono">&lt;</span> seguido do nome, ID ou modelo de um torno (ex.:
+                <code class="font-mono bg-secondary px-1.5 py-0.5">&lt;TC-07</code>) para pular direto para o monitor
+                ao vivo daquela máquina.
+            </p>
+        </div>
+    </div>
+</div>

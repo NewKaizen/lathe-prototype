@@ -1,0 +1,393 @@
+<div class="min-h-screen w-full bg-background relative overflow-y-auto custom-scrollbar selection:bg-primary/20">
+    <!-- Sidebar desktop -->
+    <aside
+        class="fixed inset-y-0 left-0 z-30 hidden md:flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-200 overflow-y-auto custom-scrollbar"
+        [class]="isSidebarCollapsed() ? 'w-[96px] px-3 py-5' : 'w-[320px] px-6 py-7'"
+    >
+        <div
+            class="shrink-0 flex items-center mb-6"
+            [class]="isSidebarCollapsed() ? 'justify-center' : 'justify-between'"
+        >
+            <div class="flex items-center gap-2">
+                <div class="w-7 h-7 bg-foreground flex items-center justify-center shrink-0">
+                    <app-icon name="activity" [size]="16" class="text-background" />
+                </div>
+                @if (!isSidebarCollapsed()) {
+                <span class="text-[15px] font-semibold text-foreground">senai digital</span>
+                }
+            </div>
+            <button
+                (click)="isSidebarCollapsed.set(!isSidebarCollapsed())"
+                [attr.aria-label]="isSidebarCollapsed() ? 'Expandir sidebar' : 'Recolher sidebar'"
+                class="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-150"
+            >
+                <app-icon [name]="isSidebarCollapsed() ? 'panel-left-open' : 'panel-left-close'" [size]="16" />
+            </button>
+        </div>
+
+        @if (!isSidebarCollapsed()) {
+        <div class="shrink-0 mb-5 pb-5 border-b border-sidebar-border">
+            <div class="flex items-center gap-2 mb-1 px-1">
+                <span class="w-2.5 h-2.5 rounded-full bg-[var(--status-green)]"></span>
+                <h2 class="text-[15px] font-semibold text-foreground leading-tight">Monitor de frota</h2>
+            </div>
+            <p class="text-[13px] text-muted-foreground px-1">
+                Telemetria em tempo real · {{ lathes().length }} tornos
+            </p>
+        </div>
+        }
+
+        <nav class="shrink-0 space-y-4" aria-label="Navegação principal">
+            @for (group of navGroups; track group.title) {
+            <div>
+                @if (!isSidebarCollapsed()) {
+                <p class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 px-1">
+                    {{ group.title }}
+                </p>
+                }
+                <div class="space-y-1">
+                    @for (item of group.items; track item.id) {
+                    <button
+                        (click)="goTo(item.id)"
+                        [attr.aria-current]="activeNavId() === item.id ? 'page' : null"
+                        [attr.title]="isSidebarCollapsed() ? item.label : null"
+                        class="side-nav-link"
+                        [class.side-nav-link-active]="activeNavId() === item.id"
+                        [class]="isSidebarCollapsed() ? 'justify-center px-2.5' : ''"
+                    >
+                        <span
+                            class="flex items-center"
+                            [class.justify-center]="isSidebarCollapsed()"
+                            [class.gap-3]="!isSidebarCollapsed()"
+                        >
+                            <app-icon [name]="item.icon" [size]="20" />
+                            @if (!isSidebarCollapsed()) {
+                            <span class="font-medium text-[14px]">{{ item.label }}</span>
+                            }
+                        </span>
+                        @if (!isSidebarCollapsed() && item.id === 'alerts' && alertCount() > 0) {
+                        <span
+                            class="ml-3 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-[var(--status-red)] px-1.5 text-[10px] font-bold text-white"
+                        >
+                            {{ alertCount() > 9 ? '9+' : alertCount() }}
+                        </span>
+                        }
+                    </button>
+                    }
+                </div>
+            </div>
+            }
+        </nav>
+
+        <div class="flex-1"></div>
+
+        @if (!isSidebarCollapsed()) {
+        <!-- MOCK: card decorativo — ligar ao status real de conexão via BaseSocketService.connectionStatus$ quando integrado -->
+        <div class="shrink-0 tile p-4 mb-4">
+            <span class="tag tag-blue mb-2">Conectado</span>
+            <h4 class="text-[13px] font-semibold text-foreground leading-tight flex items-center gap-1.5 mt-2">
+                <app-icon name="activity" [size]="14" /> Broker MQTT ativo
+            </h4>
+            <p class="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                Fluxo de telemetria sincronizado com a frota.
+            </p>
+            <div class="flex items-end justify-between mt-3">
+                <span>
+                    <span class="text-[22px] font-light text-foreground tabular-nums metric-display"
+                        >{{ lathes().length }}</span
+                    >
+                    <span class="text-[11px] text-muted-foreground ml-1">tornos</span>
+                </span>
+            </div>
+        </div>
+        }
+
+        <div class="shrink-0 flex items-center" [class]="isSidebarCollapsed() ? 'justify-center' : 'justify-between'">
+            @if (!isSidebarCollapsed()) {
+            <div class="flex items-center gap-2 min-w-0">
+                <div class="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                    <app-icon name="user" [size]="14" class="text-primary" />
+                </div>
+                <span class="text-[12px] text-muted-foreground truncate">{{ userName() }}</span>
+            </div>
+            }
+            <div class="flex items-center gap-1">
+                <button
+                    (click)="isSettingsOpen.set(true)"
+                    title="Configurações"
+                    class="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-150"
+                >
+                    <app-icon name="settings-2" [size]="16" />
+                </button>
+                <button
+                    (click)="logout.emit()"
+                    title="Sair"
+                    class="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-150"
+                >
+                    <app-icon name="log-out" [size]="16" />
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!--
+        Nav mobile — 5 ícones curados + 6º botão "Mais" que abre a sheet com todos os NAV_GROUPS.
+        Fase F: o botão "Mais" escala para qualquer página nova futura sem tocar nos 5 slots curados.
+    -->
+    <nav
+        class="fixed z-20 flex bottom-0 left-0 right-0 h-14 flex-row items-center justify-between px-2 md:hidden tile border-t"
+        aria-label="Navegação principal"
+    >
+        <div class="flex gap-1 w-full justify-around">
+            @for (item of mobileNavItems; track item.id) {
+            <button
+                (click)="goTo(item.id)"
+                [attr.aria-label]="item.label"
+                [attr.aria-current]="activeNavId() === item.id ? 'page' : null"
+                class="relative p-2.5 transition-colors duration-150"
+                [class.bg-foreground]="activeNavId() === item.id"
+                [class.text-background]="activeNavId() === item.id"
+                [class.text-muted-foreground]="activeNavId() !== item.id"
+            >
+                <app-icon [name]="item.icon" [size]="20" />
+                @if (item.id === 'alerts' && alertCount() > 0) {
+                <span
+                    class="absolute top-1 right-1 w-4 h-4 rounded-full bg-[var(--status-red)] text-white text-[10px] font-bold flex items-center justify-center"
+                >
+                    {{ alertCount() > 9 ? '9+' : alertCount() }}
+                </span>
+                }
+            </button>
+            }
+
+            <!-- 6º botão "Mais" — abre a sheet com NAV_GROUPS completo -->
+            <button
+                (click)="isMobileMoreOpen.set(true)"
+                aria-label="Mais opções de navegação"
+                [attr.aria-expanded]="isMobileMoreOpen()"
+                class="relative p-2.5 transition-colors duration-150 text-muted-foreground"
+                [class.bg-foreground]="isMobileMoreOpen()"
+                [class.text-background]="isMobileMoreOpen()"
+            >
+                <app-icon name="more-horizontal" [size]="20" />
+            </button>
+        </div>
+    </nav>
+
+    <!--
+        Fase F: Sheet "Mais" mobile — lista todos os NAV_GROUPS, fecha com ESC, clique fora ou ao selecionar item.
+        Sem blur, sem glass — tile/modal-overlay-scrim, consistente com o padrão do app (maintenance-scheduler).
+    -->
+    @if (isMobileMoreOpen()) {
+    <div class="fixed inset-0 z-40 md:hidden flex flex-col justify-end">
+        <!-- Overlay scrim — clique fora fecha -->
+        <div class="absolute inset-0 modal-overlay-scrim" (click)="isMobileMoreOpen.set(false)"></div>
+
+        <!-- Sheet -->
+        <div
+            class="relative tile border-t max-h-[70vh] overflow-y-auto custom-scrollbar animate-fade-in"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mais opções de navegação"
+        >
+            <div class="flex items-center justify-between px-5 py-4 border-b border-border/50">
+                <span class="text-[14px] font-semibold text-foreground">Navegação</span>
+                <button
+                    (click)="isMobileMoreOpen.set(false)"
+                    aria-label="Fechar menu"
+                    class="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <app-icon name="x" [size]="16" />
+                </button>
+            </div>
+
+            <div class="px-4 py-3 space-y-5">
+                @for (group of navGroups; track group.title) {
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 px-1">
+                        {{ group.title }}
+                    </p>
+                    <div class="space-y-0.5">
+                        @for (item of group.items; track item.id) {
+                        <button
+                            (click)="goTo(item.id)"
+                            [attr.aria-current]="activeNavId() === item.id ? 'page' : null"
+                            class="w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors duration-150 rounded-sm"
+                            [class.bg-foreground]="activeNavId() === item.id"
+                            [class.text-background]="activeNavId() === item.id"
+                            [class.text-foreground]="activeNavId() !== item.id"
+                            [class.hover:bg-secondary]="activeNavId() !== item.id"
+                        >
+                            <app-icon [name]="item.icon" [size]="18" class="shrink-0" />
+                            <span class="font-medium text-[14px]">{{ item.label }}</span>
+                            @if (item.id === 'alerts' && alertCount() > 0) {
+                            <span
+                                class="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--status-red)] px-1 text-[10px] font-bold text-white"
+                            >
+                                {{ alertCount() > 9 ? '9+' : alertCount() }}
+                            </span>
+                            }
+                        </button>
+                        }
+                    </div>
+                </div>
+                }
+
+                <!-- Ações de conta no rodapé da sheet -->
+                <div class="border-t border-border/50 pt-4 pb-2 flex gap-2">
+                    <button
+                        (click)="isSettingsOpen.set(true); isMobileMoreOpen.set(false)"
+                        class="flex-1 flex items-center justify-center gap-2 h-10 border border-border bg-card hover:bg-secondary text-[13px] font-medium text-foreground transition-colors"
+                    >
+                        <app-icon name="settings-2" [size]="16" />
+                        Configurações
+                    </button>
+                    <button
+                        (click)="logout.emit(); isMobileMoreOpen.set(false)"
+                        class="flex-1 flex items-center justify-center gap-2 h-10 border border-border bg-card hover:bg-secondary text-[13px] font-medium text-muted-foreground transition-colors"
+                    >
+                        <app-icon name="log-out" [size]="16" />
+                        Sair
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Main content -->
+    <div
+        class="max-w-7xl mx-auto px-6 py-12 md:py-16 pb-20 md:pb-16"
+        [class]="isSidebarCollapsed() ? 'md:pl-[128px]' : 'md:pl-[352px]'"
+    >
+        <!-- Trilha de navegação — sempre visível, mesmo nas páginas de documento. -->
+        <nav class="flex items-center flex-wrap gap-1.5 text-[12px] mb-5" aria-label="Caminho de navegação">
+            @for (crumb of breadcrumb(); track $index; let last = $last) { @if (!last && crumb.view) {
+            <button
+                (click)="goTo(crumb.view)"
+                class="text-muted-foreground hover:text-foreground transition-colors font-medium"
+            >
+                {{ crumb.label }}
+            </button>
+            <app-icon name="chevron-right" [size]="12" class="text-muted-foreground/50" />
+            } @else {
+            <span class="text-foreground font-semibold truncate max-w-[16rem]">{{ crumb.label }}</span>
+            } }
+        </nav>
+
+        <!-- Busca interna — sempre acessível, não só na Início. -->
+        <div class="mb-8 max-w-xl">
+            <app-command-search
+                [lathes]="lathes()"
+                (select)="onCommandSelect($event)"
+                (openReference)="goTo('commands')"
+            />
+        </div>
+
+        @if (fleetView() !== 'report-detail' && fleetView() !== 'cost-detail') {
+        <div class="mb-10">
+            <div class="flex items-center gap-3 mb-2">
+                <app-icon name="activity" [size]="20" class="text-foreground" />
+                <p class="text-overline text-muted-foreground">Telemetria</p>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-light text-foreground">{{ viewTitles[fleetView()] }}</h1>
+            @if (fleetView() === 'home') {
+            <p class="text-muted-foreground mt-2 max-w-lg text-[15px]">
+                Bem-vindo de volta, {{ userName() }}. Aqui está um resumo da operação.
+            </p>
+            } @else if (fleetView() === 'fleet') {
+            <p class="text-muted-foreground mt-2 max-w-lg text-[15px]">
+                Selecione uma máquina para acessar a visualização em tempo real.
+            </p>
+            } @else if (viewSubtitles[fleetView()]) {
+            <p class="text-muted-foreground mt-2 max-w-lg text-[15px]">{{ viewSubtitles[fleetView()] }}</p>
+            }
+        </div>
+        }
+
+        @if (fleetView() === 'home') {
+        <app-fleet-home-view
+            [overview]="overview()"
+            [counts]="counts()"
+            [totalCount]="lathes().length"
+            [alertCount]="alertCount()"
+            (select)="select.emit($event)"
+            (navigate)="goTo($event)"
+        />
+        } @if (fleetView() === 'fleet') {
+        <app-fleet-listing-view
+            [totalCount]="lathes().length"
+            [search]="search()"
+            [filter]="filter()"
+            [layoutMode]="layoutMode()"
+            [grouped]="grouped()"
+            [flatSorted]="flatSorted()"
+            [filtered]="filtered()"
+            [isFiltering]="isFiltering()"
+            [collapsedSectors]="collapsedSectors()"
+            [allCollapsed]="allCollapsed()"
+            [counts]="counts()"
+            (searchChange)="search.set($event)"
+            (filterChange)="filter.set($event)"
+            (layoutModeChange)="setLayoutMode($event)"
+            (toggleSector)="toggleSector($event)"
+            (toggleAllSectors)="toggleAllSectors()"
+            (select)="select.emit($event)"
+        />
+        } @if (fleetView() === 'alerts') {
+        <app-fleet-alerts-view [urgentAlerts]="urgentAlerts()" (select)="select.emit($event)" />
+        } @if (fleetView() === 'maintenance') {
+        <app-fleet-maintenance-view [maintenanceSorted]="maintenanceSorted()" (select)="select.emit($event)" />
+        } @if (fleetView() === 'overview') {
+        <app-fleet-overview-view
+            [overview]="overview()"
+            [counts]="counts()"
+            [totalCount]="lathes().length"
+            (select)="select.emit($event)"
+        />
+        } @if (fleetView() === 'plant') {
+        <app-fleet-plant-view [plantSectors]="plantSectors()" (select)="select.emit($event)" />
+        } @if (fleetView() === 'energy') {
+        <app-fleet-energy-view [energy]="energyEstimate()" [lathes]="lathes()" (openCost)="openCostDetail($event)" />
+        } @if (fleetView() === 'reports') {
+        <app-fleet-reports-view
+            [overview]="overview()"
+            [counts]="counts()"
+            [totalCount]="lathes().length"
+            [alertCount]="alertCount()"
+            [maintenanceDueSoon]="maintenanceDueSoon()"
+            [processesInProgress]="processesInProgress()"
+            (select)="select.emit($event)"
+            (navigate)="goTo($event)"
+            (openReport)="openReportDetail($event)"
+        />
+        } @if (fleetView() === 'tips') {
+        <app-fleet-tips-view />
+        } @if (fleetView() === 'commands') {
+        <app-fleet-commands-view />
+        } @if (fleetView() === 'compare') {
+        <!-- Fase E: nova view de comparação entre máquinas -->
+        <app-fleet-compare-view [lathes]="lathes()" (select)="select.emit($event)" />
+        } @if (fleetView() === 'report-detail' && selectedReportKey(); as key) {
+        <app-fleet-report-detail-view
+            [reportKey]="key"
+            [lathes]="lathes()"
+            [overview]="overview()"
+            [counts]="counts()"
+            [urgentAlerts]="urgentAlerts()"
+            [maintenanceSorted]="maintenanceSorted()"
+            [maintenanceDueSoon]="maintenanceDueSoon()"
+            (back)="goTo('reports')"
+        />
+        } @if (fleetView() === 'cost-detail' && selectedCostMachine(); as m) {
+        <app-fleet-cost-detail-view
+            [lathe]="m"
+            [estimate]="selectedCostEstimate()!"
+            [energy]="energyEstimate()"
+            (back)="goTo('energy')"
+        />
+        }
+    </div>
+
+    <app-user-settings-modal [isOpen]="isSettingsOpen()" [userName]="userName()" (close)="isSettingsOpen.set(false)" />
+</div>

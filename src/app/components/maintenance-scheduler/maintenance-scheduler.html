@@ -1,0 +1,124 @@
+@if (isOpen()) {
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 modal-overlay-scrim" (click)="close.emit()"></div>
+
+    <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="scheduler-title"
+        class="relative w-full max-w-[420px] max-h-[85vh] overflow-y-auto custom-scrollbar tile p-6 animate-fade-in"
+    >
+        <button
+            (click)="close.emit()"
+            aria-label="Fechar"
+            class="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+        >
+            <app-icon name="x" [size]="16" aria-hidden="true" />
+        </button>
+
+        <div class="mb-4">
+            <h2 id="scheduler-title" class="flex items-center gap-2 text-[17px] font-semibold text-foreground">
+                <span class="w-8 h-8 bg-primary/10 flex items-center justify-center">
+                    <app-icon name="calendar" [size]="16" class="text-primary" aria-hidden="true" />
+                </span>
+                Agendar Manutenção
+            </h2>
+            <p class="text-[14px] text-muted-foreground mt-2">
+                Configure os detalhes do serviço para a máquina selecionada.
+            </p>
+        </div>
+
+        @if (machine(); as m) {
+        <form (ngSubmit)="onSubmit()" class="space-y-5">
+            <div class="bg-secondary/50 p-3.5 border border-border/50 flex flex-col gap-0.5">
+                <div class="font-semibold text-[15px] text-foreground">{{ m.name }}</div>
+                <div class="text-[13px] font-medium text-muted-foreground">{{ m.type }}</div>
+            </div>
+
+            <div class="space-y-2.5">
+                <label class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wide"
+                    >Tipo de Manutenção</label
+                >
+                <select [ngModel]="type()" (ngModelChange)="type.set($event)" name="type" class="input-field">
+                    <option value="preventive">Preventiva</option>
+                    <option value="predictive">Preditiva</option>
+                    <option value="corrective">Corretiva</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="space-y-2.5">
+                    <label class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wide">Data</label>
+                    <input
+                        type="date"
+                        name="date"
+                        [ngModel]="date()"
+                        (ngModelChange)="date.set($event)"
+                        required
+                        class="input-field"
+                    />
+                </div>
+                <div class="space-y-2.5">
+                    <label class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wide"
+                        >Horário</label
+                    >
+                    <input
+                        type="time"
+                        name="time"
+                        [ngModel]="time()"
+                        (ngModelChange)="time.set($event)"
+                        required
+                        class="input-field"
+                    />
+                </div>
+            </div>
+
+            <div class="space-y-2.5">
+                <label class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wide"
+                    >Técnico Responsável</label
+                >
+                <input
+                    type="text"
+                    name="technician"
+                    placeholder="Nome completo"
+                    [ngModel]="technician()"
+                    (ngModelChange)="technician.set($event)"
+                    required
+                    class="input-field"
+                />
+            </div>
+
+            <div class="space-y-2.5">
+                <label class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wide"
+                    >Observações</label
+                >
+                <textarea
+                    name="notes"
+                    placeholder="Adicione detalhes adicionais aqui..."
+                    rows="3"
+                    [ngModel]="notes()"
+                    (ngModelChange)="notes.set($event)"
+                    class="input-field resize-none py-2.5 h-auto"
+                ></textarea>
+            </div>
+
+            <div class="flex gap-3 pt-2">
+                <button
+                    type="button"
+                    (click)="close.emit()"
+                    class="flex-1 h-11 font-semibold text-[15px] bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+                >
+                    Cancelar
+                </button>
+                <button
+                    type="submit"
+                    class="flex-1 h-11 font-semibold text-[15px] bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                    Agendar
+                </button>
+            </div>
+        </form>
+        }
+    </div>
+</div>
+}

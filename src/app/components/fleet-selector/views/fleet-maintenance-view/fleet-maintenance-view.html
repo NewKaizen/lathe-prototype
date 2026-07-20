@@ -1,0 +1,28 @@
+<div class="space-y-3">
+    @for (l of maintenanceSorted(); track l.id) {
+    <button
+        (click)="select.emit(l)"
+        class="w-full tile flex items-center gap-4 px-4 py-3 hover:bg-secondary/40 transition-colors text-left group"
+    >
+        <div class="w-2 h-2 rounded-full shrink-0" [class]="STATUS_META[l.status].dot"></div>
+        <div class="flex-1 min-w-0">
+            <p class="text-[14px] font-semibold text-foreground truncate">{{ l.name }}</p>
+            <p class="text-[11px] text-muted-foreground">{{ l.model }}</p>
+        </div>
+        <div class="text-right shrink-0">
+            <p class="text-[12px] font-semibold tabular-nums" [style.color]="maintenanceColor(l.nextMaintenance)">
+                {{ l.nextMaintenance }}
+            </p>
+            <p class="text-[10px] text-muted-foreground">
+                {{ diffFor(l.nextMaintenance) < 0 ? (-diffFor(l.nextMaintenance)) + 'd atrasada' :
+                diffFor(l.nextMaintenance) === 0 ? 'hoje' : 'em ' + diffFor(l.nextMaintenance) + 'd' }}
+            </p>
+        </div>
+        <app-icon
+            name="arrow-right"
+            [size]="16"
+            class="text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0"
+        />
+    </button>
+    }
+</div>

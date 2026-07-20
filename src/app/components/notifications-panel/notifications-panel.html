@@ -1,0 +1,105 @@
+<div class="relative">
+    <button
+        [attr.aria-label]="urgentCount() > 0 ? 'Notificações (' + urgentCount() + ')' : 'Notificações'"
+        [attr.aria-expanded]="open()"
+        title="Notificações"
+        (click)="toggle()"
+        class="relative w-11 h-11 rounded-full border border-border bg-card hover:bg-secondary flex items-center justify-center transition-colors duration-150"
+        [class.text-foreground]="open()"
+        [class.text-muted-foreground]="!open()"
+    >
+        <app-icon name="bell" [size]="20" />
+        @if (urgentCount() > 0) {
+        <span
+            class="absolute top-0.5 right-0.5 min-w-4 h-4 px-1 rounded-full bg-[var(--status-red)] text-white text-[10px] font-bold flex items-center justify-center tabular-nums"
+        >
+            {{ urgentCount() > 9 ? '9+' : urgentCount() }}
+        </span>
+        }
+    </button>
+
+    @if (open()) {
+    <div
+        class="absolute right-0 top-[calc(100%+8px)] z-50 w-[min(340px,calc(100vw-2rem))] border border-border/60 bg-card overflow-hidden animate-fade-in"
+    >
+        <div class="px-4 py-3 border-b border-border/50 flex items-center justify-between gap-2">
+            <p class="text-[13px] font-semibold text-foreground">Notificações</p>
+            <div class="flex items-center gap-2 shrink-0">
+                <span class="text-[11px] text-muted-foreground tabular-nums">
+                    {{ alerts().length === 0 ? 'tudo em dia' : alerts().length + ' ativa' + (alerts().length !== 1 ? 's'
+                    : '') }}
+                </span>
+                @if (alerts().length > 0) {
+                <button
+                    type="button"
+                    (click)="dismissAll()"
+                    class="text-[11px] font-semibold text-primary hover:text-primary/70 transition-colors"
+                >
+                    Marcar tudo como lido
+                </button>
+                }
+            </div>
+        </div>
+
+        @if (alerts().length === 0) {
+        <div class="flex flex-col items-center gap-2 py-10 text-center">
+            <div class="w-12 h-12 rounded-full bg-[var(--status-green)]/10 flex items-center justify-center">
+                <app-icon name="check-circle-2" [size]="24" class="text-[var(--status-green)]" />
+            </div>
+            <p class="text-[13px] font-medium text-foreground">Sem alertas ativos</p>
+            <p class="text-[12px] text-muted-foreground px-6">
+                A frota está operando normalmente e não há manutenções vencidas.
+            </p>
+        </div>
+        } @else {
+        <div class="max-h-[420px] overflow-y-auto custom-scrollbar">
+            @if (operationAlerts().length > 0) {
+            <p class="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-[var(--status-red)]">
+                Alertas de Operação
+            </p>
+            <div class="divide-y divide-border/40">
+                @for (a of operationAlerts(); track a.id) {
+                <ng-container *ngTemplateOutlet="alertRow; context: { a: a }" />
+                }
+            </div>
+            } @if (maintenanceAlerts().length > 0) {
+            <p class="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-[var(--status-blue)]">
+                Manutenções Pendentes
+            </p>
+            <div class="divide-y divide-border/40">
+                @for (a of maintenanceAlerts(); track a.id) {
+                <ng-container *ngTemplateOutlet="alertRow; context: { a: a }" />
+                }
+            </div>
+            }
+        </div>
+        }
+    </div>
+    }
+</div>
+
+<ng-template #alertRow let-a="a">
+    <div class="w-full flex items-start gap-1 pl-4 pr-2 py-3 hover:bg-secondary/50 transition-colors group">
+        <button (click)="select(a)" class="flex-1 min-w-0 flex items-start gap-3 text-left">
+            <div
+                class="w-8 h-8 flex items-center justify-center shrink-0"
+                [style.background]="'color-mix(in srgb, ' + a.cssVar + ' 12%, transparent)'"
+            >
+                <app-icon [name]="iconOf(a.kind)" [size]="16" [style.color]="a.cssVar" />
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-[13px] font-semibold text-foreground leading-snug">{{ a.title }}</p>
+                <p class="text-[12px] text-muted-foreground mt-0.5">{{ a.detail }}</p>
+            </div>
+        </button>
+        <button
+            type="button"
+            (click)="dismiss(a, $event)"
+            aria-label="Dispensar notificação"
+            title="Dispensar"
+            class="mt-0.5 p-1.5 rounded-full text-muted-foreground/50 hover:text-foreground hover:bg-secondary shrink-0 transition-colors"
+        >
+            <app-icon name="x" [size]="14" />
+        </button>
+    </div>
+</ng-template>

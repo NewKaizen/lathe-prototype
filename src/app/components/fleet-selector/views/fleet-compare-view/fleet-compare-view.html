@@ -1,0 +1,252 @@
+<div class="space-y-8">
+    <!-- Picker de máquinas -->
+    <div class="tile p-5">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="text-[15px] font-semibold text-foreground">Selecionar Máquinas</h3>
+                <p class="text-[12px] text-muted-foreground mt-0.5">
+                    {{ selectedIds().length }}/{{ maxCompare }} selecionadas
+                    @if (!canAdd()) { — limite atingido }
+                </p>
+            </div>
+            @if (selectedLathes().length > 0) {
+            <button
+                type="button"
+                (click)="selectedIds.set([])"
+                class="text-[12px] font-semibold text-muted-foreground hover:text-foreground transition-colors"
+            >
+                Limpar tudo
+            </button>
+            }
+        </div>
+
+        <!-- Chips das máquinas já selecionadas -->
+        @if (selectedLathes().length > 0) {
+        <div class="flex flex-wrap gap-2 mb-4">
+            @for (l of selectedLathes(); track l.id) {
+            <span
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border bg-secondary text-[12px] font-semibold rounded-full"
+            >
+                <span class="w-2 h-2 rounded-full shrink-0" [class]="STATUS_META[l.status].dot"></span>
+                {{ l.name }}
+                <button
+                    type="button"
+                    (click)="removeLathe(l.id)"
+                    [attr.aria-label]="'Remover ' + l.name"
+                    class="ml-1 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <app-icon name="x" [size]="12" />
+                </button>
+            </span>
+            }
+        </div>
+        }
+
+        <!-- Campo de busca + lista para adicionar -->
+        @if (canAdd()) {
+        <div class="space-y-2">
+            <div class="relative">
+                <app-icon
+                    name="search"
+                    [size]="14"
+                    class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                />
+                <input
+                    type="text"
+                    [value]="pickerSearch()"
+                    (input)="pickerSearch.set($any($event.target).value)"
+                    placeholder="Buscar máquina para adicionar..."
+                    class="w-full h-9 pl-9 pr-3 bg-card border border-border focus:border-primary text-[13px] text-foreground placeholder:text-muted-foreground outline-none transition-colors"
+                />
+            </div>
+            @if (availableLathes().length > 0) {
+            <div class="max-h-[200px] overflow-y-auto custom-scrollbar tile border border-border">
+                @for (l of availableLathes(); track l.id) {
+                <button
+                    type="button"
+                    (click)="addLathe(l.id)"
+                    class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-secondary/40 transition-colors text-left border-b border-border/40 last:border-b-0"
+                >
+                    <span class="w-2 h-2 rounded-full shrink-0" [class]="STATUS_META[l.status].dot"></span>
+                    <span class="flex-1 min-w-0">
+                        <span class="block text-[13px] font-semibold text-foreground truncate">{{ l.name }}</span>
+                        <span class="block text-[11px] text-muted-foreground truncate">{{ l.model }} · {{ l.sector }}</span>
+                    </span>
+                    <span [class]="STATUS_META[l.status].badge" class="shrink-0">{{ STATUS_META[l.status].label }}</span>
+                    <app-icon name="plus" [size]="14" class="text-primary shrink-0" />
+                </button>
+                }
+            </div>
+            } @else if (pickerSearch()) {
+            <p class="text-[12px] text-muted-foreground px-1 py-2">Nenhuma máquina encontrada com "{{ pickerSearch() }}".</p>
+            }
+        </div>
+        }
+    </div>
+
+    <!-- Estado vazio: 0 máquinas selecionadas -->
+    @if (selectedLathes().length === 0) {
+    <div class="flex flex-col items-center justify-center py-20 text-center">
+        <div class="w-16 h-16 bg-secondary flex items-center justify-center mb-4">
+            <app-icon name="git-compare-arrows" [size]="32" class="text-muted-foreground/40" />
+        </div>
+        <h3 class="text-[17px] font-semibold text-foreground mb-1">Selecione as máquinas</h3>
+        <p class="text-muted-foreground max-w-sm">
+            Escolha ao menos 2 tornos no seletor acima para iniciar a comparação lado a lado.
+        </p>
+    </div>
+    }
+
+    <!-- Estado intermediário: apenas 1 máquina selecionada -->
+    @if (selectedLathes().length === 1) {
+    <div class="flex flex-col items-center justify-center py-12 text-center">
+        <app-icon name="plus-circle" [size]="32" class="text-muted-foreground/30 mb-3" />
+        <p class="text-[14px] font-semibold text-foreground mb-1">Adicione mais uma máquina</p>
+        <p class="text-[13px] text-muted-foreground">
+            Você selecionou <span class="font-semibold">{{ selectedLathes()[0].name }}</span>. Adicione ao menos mais
+            uma para iniciar a comparação.
+        </p>
+    </div>
+    }
+
+    <!-- Tabela comparativa — aparece com 2+ máquinas -->
+    @if (selectedLathes().length >= 2) {
+    <div>
+        <h3 class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Comparação Lado a Lado
+        </h3>
+        <!--
+            overflow-x-auto: padrão responsivo para tabelas densas (Fase B / Fase E).
+            Cada coluna tem largura fixa de 180px + 1 coluna de rótulo de 160px.
+        -->
+        <div class="overflow-x-auto">
+            <div class="tile overflow-hidden" [style.min-width.px]="160 + selectedLathes().length * 180">
+
+                <!-- Header da tabela: uma coluna por máquina -->
+                <div
+                    class="grid border-b border-border bg-secondary/40"
+                    [style.grid-template-columns]="'160px ' + 'repeat(' + selectedLathes().length + ', 180px)'"
+                >
+                    <div class="px-4 py-3 text-overline text-muted-foreground">Métrica</div>
+                    @for (l of selectedLathes(); track l.id; let idx = $index) {
+                    <div class="px-4 py-3 border-l border-border/40">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="w-2 h-2 rounded-full shrink-0" [class]="STATUS_META[l.status].dot"></span>
+                            <span class="text-[13px] font-semibold text-foreground truncate">{{ l.name }}</span>
+                        </div>
+                        <p class="text-[11px] text-muted-foreground truncate">{{ l.model }} · {{ l.sector }}</p>
+                        <span class="mt-1.5 inline-block" [class]="STATUS_META[l.status].badge">{{
+                            STATUS_META[l.status].label
+                        }}</span>
+                        <button
+                            type="button"
+                            (click)="select.emit(l)"
+                            class="mt-2 flex items-center gap-1 text-[11px] font-semibold text-primary hover:text-primary/70 transition-colors"
+                        >
+                            Ver detalhes
+                            <app-icon name="arrow-right" [size]="12" />
+                        </button>
+                    </div>
+                    }
+                </div>
+
+                <!-- Linhas de métricas -->
+                @for (metric of metrics; track metric.key) {
+                <div
+                    class="grid border-b border-border/40 last:border-b-0 items-center"
+                    [style.grid-template-columns]="'160px ' + 'repeat(' + selectedLathes().length + ', 180px)'"
+                >
+                    <!-- Rótulo da métrica -->
+                    <div class="px-4 py-3 bg-secondary/20">
+                        <span class="flex items-center gap-2 text-[12px] font-semibold text-muted-foreground">
+                            <app-icon [name]="metric.icon" [size]="13" class="shrink-0" />
+                            {{ metric.label }}
+                        </span>
+                    </div>
+
+                    <!-- Célula por máquina -->
+                    @for (l of selectedLathes(); track l.id; let idx = $index) {
+                    <div
+                        class="px-4 py-3 border-l border-border/40 transition-colors duration-300"
+                        [class]="bestBgClass(metric, idx)"
+                    >
+                        <div class="flex items-baseline gap-1 mb-2">
+                            <span
+                                class="text-[20px] metric-display tabular-nums font-light transition-colors duration-300"
+                                [class]="bestTextClass(metric, idx)"
+                            >
+                                {{ fmtValue(l, metric) }}
+                            </span>
+                            <span class="text-[10px] text-muted-foreground">{{ metric.unit }}</span>
+                            @if (bestIndex(metric) === idx) {
+                            <app-icon name="trending-up" [size]="12" class="text-[var(--status-green)] ml-1" />
+                            }
+                        </div>
+                        <!-- Sparkline por métrica numérica -->
+                        <svg
+                            class="w-full h-5"
+                            viewBox="0 0 60 20"
+                            preserveAspectRatio="none"
+                            fill="none"
+                            stroke-width="1.5"
+                            [attr.stroke]="sparkColor(l)"
+                            aria-hidden="true"
+                        >
+                            <path
+                                [attr.d]="sparklinePath(l, metric)"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                opacity="0.7"
+                            />
+                        </svg>
+                    </div>
+                    }
+                </div>
+                }
+
+                <!-- Linha de processo atual (string, sem sparkline) -->
+                <div
+                    class="grid border-b border-border/40 items-start"
+                    [style.grid-template-columns]="'160px ' + 'repeat(' + selectedLathes().length + ', 180px)'"
+                >
+                    <div class="px-4 py-3 bg-secondary/20">
+                        <span class="flex items-center gap-2 text-[12px] font-semibold text-muted-foreground">
+                            <app-icon name="cpu" [size]="13" class="shrink-0" />
+                            Processo Atual
+                        </span>
+                    </div>
+                    @for (l of selectedLathes(); track l.id) {
+                    <div class="px-4 py-3 border-l border-border/40">
+                        @if (l.currentProcess) {
+                        <span class="text-[12px] font-medium text-foreground">{{ l.currentProcess }}</span>
+                        } @else {
+                        <span class="text-[12px] text-muted-foreground italic">Sem processo ativo</span>
+                        }
+                    </div>
+                    }
+                </div>
+
+                <!-- Linha de manutenção -->
+                <div
+                    class="grid items-start"
+                    [style.grid-template-columns]="'160px ' + 'repeat(' + selectedLathes().length + ', 180px)'"
+                >
+                    <div class="px-4 py-3 bg-secondary/20">
+                        <span class="flex items-center gap-2 text-[12px] font-semibold text-muted-foreground">
+                            <app-icon name="calendar" [size]="13" class="shrink-0" />
+                            Próxima Manut.
+                        </span>
+                    </div>
+                    @for (l of selectedLathes(); track l.id) {
+                    <div class="px-4 py-3 border-l border-border/40">
+                        <span class="text-[12px] font-semibold text-foreground tabular-nums">{{
+                            l.nextMaintenance
+                        }}</span>
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+</div>

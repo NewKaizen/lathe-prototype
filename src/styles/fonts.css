@@ -1,0 +1,5 @@
+/* IBM Plex Sans = tipografia única de produto (--font-sans e --font-display) — mesma família
+   usada em ibm.com e no Carbon Design System. IBM Plex Mono = números tabulares/métricas
+   (--font-mono). Atkinson Hyperlegible = modo "fonte para dislexia" (ver
+   SettingsService.setFontFamily) — alta legibilidade; Comic Sans só como fallback de emergência. */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap');

@@ -1,0 +1,40 @@
+<div class="fixed inset-0 w-full h-full z-0 bg-background flex items-center justify-center">
+    <canvas
+        #canvas
+        class="w-full h-full absolute inset-0 transition-opacity duration-500"
+        [class.opacity-80]="mode() === '3d'"
+        [class.opacity-0]="mode() !== '3d'"
+        [class.pointer-events-none]="mode() !== '3d'"
+        style="display: block; outline: none"
+    ></canvas>
+
+    @if (mode() === '3d') {
+    <div class="absolute top-6 right-6 z-10 flex gap-2">
+        <button
+            (click)="resetCamera()"
+            title="Resetar Câmera"
+            class="w-9 h-9 rounded-full bg-secondary/50 hover:bg-secondary text-foreground flex items-center justify-center transition-colors"
+        >
+            <app-icon name="rotate-ccw" [size]="16" />
+        </button>
+    </div>
+    }
+
+    <!-- MOCK: aguarda endpoint de stream do backend. Trocar por <img>/<video> quando disponível. -->
+    <div
+        class="absolute inset-0 w-full h-full flex flex-col items-center justify-center gap-3 bg-black transition-opacity duration-500"
+        [class.opacity-100]="mode() === 'camera'"
+        [class.opacity-0]="mode() !== 'camera'"
+        [class.pointer-events-none]="mode() !== 'camera'"
+    >
+        <div class="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center">
+            <app-icon name="camera" [size]="28" class="text-white/60" />
+        </div>
+        <div class="text-center px-6">
+            <p class="text-white font-semibold text-[15px]">Aguardando integração de câmera</p>
+            <p class="text-white/50 text-[13px] mt-1 max-w-xs">
+                O stream ao vivo de {{ latheData().id }} ainda depende do endpoint de câmera do backend.
+            </p>
+        </div>
+    </div>
+</div>

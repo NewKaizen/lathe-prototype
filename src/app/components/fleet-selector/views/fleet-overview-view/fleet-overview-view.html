@@ -1,0 +1,88 @@
+<div class="space-y-8">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="tile px-4 py-4 flex items-center gap-3">
+            <div class="w-10 h-10 bg-[var(--status-green)]/10 flex items-center justify-center shrink-0">
+                <app-icon name="trending-up" [size]="20" class="text-[var(--status-green)]" />
+            </div>
+            <div>
+                <p class="text-[10px] text-muted-foreground leading-none mb-1">Eficiência Média</p>
+                <p class="text-[17px] font-bold text-foreground tabular-nums">{{ overview().avgEfficiency }}%</p>
+            </div>
+        </div>
+        <div class="tile px-4 py-4 flex items-center gap-3">
+            <div class="w-10 h-10 bg-[var(--status-red)]/10 flex items-center justify-center shrink-0">
+                <app-icon name="thermometer" [size]="20" class="text-[var(--status-red)]" />
+            </div>
+            <div>
+                <p class="text-[10px] text-muted-foreground leading-none mb-1">Temp. Média</p>
+                <p class="text-[17px] font-bold text-foreground tabular-nums">{{ overview().avgTemp }}°C</p>
+            </div>
+        </div>
+        <div class="tile px-4 py-4 flex items-center gap-3">
+            <div class="w-10 h-10 bg-primary/10 flex items-center justify-center shrink-0">
+                <app-icon name="clock" [size]="20" class="text-primary" />
+            </div>
+            <div>
+                <p class="text-[10px] text-muted-foreground leading-none mb-1">Horas Totais</p>
+                <p class="text-[17px] font-bold text-foreground tabular-nums">{{ overview().totalHours }}</p>
+            </div>
+        </div>
+        <div class="tile px-4 py-4 flex items-center gap-3">
+            <div class="w-10 h-10 bg-[var(--status-green)]/10 flex items-center justify-center shrink-0">
+                <app-icon name="activity" [size]="20" class="text-[var(--status-green)]" />
+            </div>
+            <div>
+                <p class="text-[10px] text-muted-foreground leading-none mb-1">Em Operação</p>
+                <p class="text-[17px] font-bold text-foreground tabular-nums">
+                    {{ counts().operational }}/{{ totalCount() }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <h3 class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Status da Frota</h3>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            @for (s of statusOrder; track s) {
+            <div class="tile px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 rounded-full" [class]="STATUS_META[s].dot"></div>
+                    <span class="text-[12px] text-muted-foreground">{{ STATUS_META[s].label }}</span>
+                </div>
+                <span class="text-[22px] font-bold text-foreground tabular-nums">{{ counts()[s] }}</span>
+            </div>
+            }
+        </div>
+    </div>
+
+    <div>
+        <h3 class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Melhores Performances
+        </h3>
+        <div class="space-y-2">
+            @for (l of overview().topPerformers; track l.id; let i = $index) {
+            <button
+                (click)="select.emit(l)"
+                class="w-full tile flex items-center gap-4 px-4 py-3 hover:bg-secondary/40 transition-colors text-left group"
+            >
+                <span class="text-[11px] font-bold text-muted-foreground w-4 shrink-0">#{{ i + 1 }}</span>
+                <div class="flex-1 min-w-0">
+                    <p class="text-[13px] font-semibold text-foreground truncate">{{ l.name }}</p>
+                    <p class="text-[11px] text-muted-foreground">{{ l.model }}</p>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <app-icon name="zap" [size]="14" class="text-[var(--status-green)]" />
+                    <span class="text-[13px] font-bold text-[var(--status-green)] tabular-nums"
+                        >{{ l.efficiency }}%</span
+                    >
+                </div>
+                <app-icon
+                    name="arrow-right"
+                    [size]="16"
+                    class="text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0"
+                />
+            </button>
+            }
+        </div>
+    </div>
+</div>

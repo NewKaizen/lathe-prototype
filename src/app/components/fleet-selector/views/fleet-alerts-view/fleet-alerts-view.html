@@ -1,0 +1,36 @@
+@if (urgentAlerts().length === 0) {
+<div class="flex flex-col items-center justify-center py-24 text-center">
+    <div class="w-16 h-16 rounded-full bg-[var(--status-green)]/10 flex items-center justify-center mb-4">
+        <app-icon name="activity" [size]="32" class="text-[var(--status-green)]" />
+    </div>
+    <h3 class="text-[17px] font-semibold text-foreground mb-1">Sem alertas ativos</h3>
+    <p class="text-muted-foreground">Toda a frota está operando normalmente.</p>
+</div>
+} @else {
+<div class="space-y-4">
+    <p class="text-[13px] text-muted-foreground">
+        {{ urgentAlerts().length }} máquina{{ urgentAlerts().length > 1 ? 's' : '' }} requerem atenção
+    </p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        @for (l of urgentAlerts(); track l.id) {
+        <button
+            type="button"
+            (click)="select.emit(l)"
+            class="tile tile-interactive p-5 w-full text-left hover:border-primary/40 transition-colors"
+        >
+            <div class="flex items-center justify-between mb-4">
+                <span [class]="STATUS_META[l.status].badge">{{ STATUS_META[l.status].label }}</span>
+                <app-icon name="arrow-right" [size]="14" class="text-muted-foreground" aria-hidden="true" />
+            </div>
+            <h3 class="font-semibold text-foreground text-[16px]">{{ l.name }}</h3>
+            <p class="text-[12px] text-muted-foreground mt-1">{{ l.model }}</p>
+            <div class="mt-4 flex items-center gap-4 text-[12px] text-muted-foreground">
+                <span>{{ l.temperature }}°C</span>
+                <span>{{ l.vibration.toFixed(1) }} mm/s</span>
+                <span [class]="efficiencyText(l.efficiency)" class="font-bold">{{ l.efficiency }}%</span>
+            </div>
+        </button>
+        }
+    </div>
+</div>
+}

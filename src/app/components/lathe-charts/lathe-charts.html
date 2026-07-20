@@ -1,0 +1,121 @@
+<div class="pb-4 space-y-4">
+    @for (c of charts(); track c.title) {
+    <div class="tile p-4 bg-card">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-8 h-8 flex items-center justify-center"
+                    [style.background]="'color-mix(in srgb, ' + c.color + ' 12%, transparent)'"
+                >
+                    <app-icon [name]="c.icon" [size]="16" [style.color]="c.color" />
+                </div>
+                <div>
+                    <p class="text-[12px] text-muted-foreground font-semibold uppercase tracking-wider">
+                        {{ c.title }}
+                    </p>
+                    <p class="font-bold text-[22px] text-foreground leading-tight tabular-nums">
+                        {{ c.current }}
+                        <span class="text-[13px] font-medium text-muted-foreground ml-1">{{ c.unit }}</span>
+                    </p>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
+                    {{ c.limitLabel }}
+                </p>
+                <p class="text-[13px] font-bold text-foreground tabular-nums">
+                    {{ c.limit }}<span class="text-muted-foreground font-medium ml-0.5">{{ c.unit }}</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="relative">
+            <svg
+                #svgEl
+                class="w-full h-[140px]"
+                viewBox="0 0 100 40"
+                preserveAspectRatio="none"
+                (mousemove)="onMove($event, svgEl, c.series)"
+                (mouseleave)="onLeave()"
+            >
+                <defs>
+                    <linearGradient [attr.id]="c.fillId" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" [attr.stop-color]="c.color" stop-opacity="0.25" />
+                        <stop offset="95%" [attr.stop-color]="c.color" stop-opacity="0" />
+                    </linearGradient>
+                </defs>
+
+                <line
+                    x1="0"
+                    y1="10"
+                    x2="100"
+                    y2="10"
+                    stroke="var(--border)"
+                    stroke-width="0.3"
+                    stroke-dasharray="1.5 1.5"
+                />
+                <line
+                    x1="0"
+                    y1="20"
+                    x2="100"
+                    y2="20"
+                    stroke="var(--border)"
+                    stroke-width="0.3"
+                    stroke-dasharray="1.5 1.5"
+                />
+                <line
+                    x1="0"
+                    y1="30"
+                    x2="100"
+                    y2="30"
+                    stroke="var(--border)"
+                    stroke-width="0.3"
+                    stroke-dasharray="1.5 1.5"
+                />
+
+                <line
+                    [attr.y1]="c.limitY"
+                    [attr.y2]="c.limitY"
+                    x1="0"
+                    x2="100"
+                    stroke="var(--status-red)"
+                    stroke-width="0.4"
+                    stroke-dasharray="2 2"
+                />
+
+                <path [attr.d]="c.path + ' L 100 40 L 0 40 Z'" [attr.fill]="'url(#' + c.fillId + ')'" stroke="none" />
+                <path
+                    [attr.d]="c.path"
+                    fill="none"
+                    [attr.stroke]="c.color"
+                    stroke-width="1"
+                    vector-effect="non-scaling-stroke"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                />
+
+                @if (hoverIndex() !== null) {
+                <line
+                    [attr.x1]="hoverX(c.series)"
+                    [attr.x2]="hoverX(c.series)"
+                    y1="0"
+                    y2="40"
+                    stroke="var(--muted-foreground)"
+                    stroke-width="0.3"
+                />
+                }
+            </svg>
+
+            @if (hoverIndex() !== null) {
+            <div
+                class="absolute top-1 px-2.5 py-1.5 bg-popover border border-border/50 text-[11px] pointer-events-none -translate-x-1/2"
+                [style.left.%]="hoverX(c.series)"
+            >
+                <span class="font-bold tabular-nums" [style.color]="c.color">{{ hoverValue(c.series) }}</span>
+                <span class="font-medium text-muted-foreground ml-1">{{ c.unit }}</span>
+            </div>
+            }
+        </div>
+    </div>
+    }
+</div>

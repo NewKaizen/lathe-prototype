@@ -1,0 +1,8 @@
+/* You can add global styles to this file, and also import other style files */
+@import './styles/fonts.css';
+@import 'tailwindcss';
+@import './styles/theme.css';
+
+body {
+  min-height: 100vh;
+}

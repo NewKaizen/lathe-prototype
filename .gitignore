@@ -1,0 +1,47 @@
+# ─── Compiled output ──────────────────────────────────────────────────────────
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# ─── Node ─────────────────────────────────────────────────────────────────────
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# ─── Angular ──────────────────────────────────────────────────────────────────
+/.angular/cache
+
+# ─── IDEs e editores ──────────────────────────────────────────────────────────
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# ─── Visual Studio Code ───────────────────────────────────────────────────────
+.vscode/
+.history/*
+
+# ─── Ferramentas de IA (configuracoes locais, nao fazem parte do projeto) ─────
+.claude/
+.gemini/
+
+# ─── Testes e cobertura ───────────────────────────────────────────────────────
+/coverage
+__screenshots__/
+*.snap
+
+# ─── Miscelanea ───────────────────────────────────────────────────────────────
+.sass-cache/
+/connect.lock
+/libpeerconnection.log
+testem.log
+/typings
+
+# ─── Sistema operacional ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini

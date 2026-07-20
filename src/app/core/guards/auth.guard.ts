@@ -1,0 +1,10 @@
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
+
+/** Redireciona para /login quando não há usuário autenticado (demo, sem JWT ainda). */
+export const authGuard: CanActivateFn = () => {
+    const auth = inject(AuthService);
+    const router = inject(Router);
+    return auth.user() ? true : router.parseUrl('/login');
+};
