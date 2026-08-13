@@ -1,0 +1,2 @@
+import {s as s$1}from'./chunk-CcDaKoGx.js';import'./main-DHVCN5OT.js';var r="oitFinalSimpleBlendPixelShader",e=`precision highp float;uniform sampler2D uFrontColor;void main() {ivec2 fragCoord=ivec2(gl_FragCoord.xy);vec4 frontColor=texelFetch(uFrontColor,fragCoord,0);glFragColor=frontColor;}
+`;s$1.ShadersStore[r]||(s$1.ShadersStore[r]=e);
