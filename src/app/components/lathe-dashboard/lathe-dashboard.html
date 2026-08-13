@@ -17,10 +17,7 @@
             </div>
             <div class="flex gap-0.5 h-1.5">
                 @for (on of dots(); track $index) {
-                <div
-                    class="flex-1 bg-primary transition-opacity duration-300"
-                    [style.opacity]="on ? 0.9 : 0.15"
-                ></div>
+                <div class="flex-1 bg-primary transition-opacity duration-300" [style.opacity]="on ? 0.9 : 0.15"></div>
                 }
             </div>
         </div>
@@ -37,6 +34,45 @@
                 }
             </div>
         </div>
+    </div>
+
+    <!-- MOCK: antecipa o formato do futuro OperationalState (Gate 2). -->
+    <div class="tile tile-interactive p-5">
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-[13px] font-semibold text-foreground flex items-center gap-1.5">
+                <app-icon name="cpu" [size]="14" class="text-primary" /> Estado Operacional
+            </span>
+            <span [class]="severityTag[operationalState().gravidade]"
+                >{{ severityLabel[operationalState().gravidade] }}</span
+            >
+        </div>
+        <div class="grid grid-cols-1 min-[400px]:grid-cols-3 gap-3">
+            <div>
+                <p class="text-[10px] text-muted-foreground uppercase tracking-widest">Modo</p>
+                <p class="text-[14px] font-semibold text-foreground">
+                    {{ modeLabel[operationalState().modoOperacao] }}
+                </p>
+            </div>
+            <div>
+                <p class="text-[10px] text-muted-foreground uppercase tracking-widest">Saúde</p>
+                <p class="text-[14px] font-semibold text-foreground">
+                    {{ healthLabel[operationalState().estadoSaude] }}
+                </p>
+            </div>
+            <div>
+                <p class="text-[10px] text-muted-foreground uppercase tracking-widest">Gravidade</p>
+                <p class="text-[14px] font-semibold text-foreground">
+                    {{ severityLabel[operationalState().gravidade] }}
+                </p>
+            </div>
+        </div>
+        @if (operationalState().flagsAtivas.length > 0) {
+        <div class="flex flex-wrap gap-1.5 mt-3">
+            @for (flag of operationalState().flagsAtivas; track flag) {
+            <span class="tag tag-yellow">{{ flag }}</span>
+            }
+        </div>
+        }
     </div>
 
     <div>
@@ -83,36 +119,6 @@
             </div>
             }
         </div>
-    </div>
-
-    <div class="tile tile-interactive p-5" title="Ilustrativo — antecipa o formato do futuro OperationalState (Gate 2)">
-        <div class="flex items-center justify-between mb-3">
-            <span class="text-[13px] font-semibold text-foreground flex items-center gap-1.5">
-                <app-icon name="cpu" [size]="14" class="text-primary" /> Estado Operacional
-            </span>
-            <span class="text-[10px] text-muted-foreground/60 italic">ilustrativo</span>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-            <div>
-                <p class="text-[10px] text-muted-foreground uppercase tracking-widest">Modo</p>
-                <p class="text-[14px] font-semibold text-foreground">
-                    {{ modeLabel[operationalState().modoOperacao] }}
-                </p>
-            </div>
-            <div>
-                <p class="text-[10px] text-muted-foreground uppercase tracking-widest">Saúde</p>
-                <p class="text-[14px] font-semibold text-foreground">
-                    {{ healthLabel[operationalState().estadoSaude] }}
-                </p>
-            </div>
-        </div>
-        @if (operationalState().flagsAtivas.length > 0) {
-        <div class="flex flex-wrap gap-1.5 mt-3">
-            @for (flag of operationalState().flagsAtivas; track flag) {
-            <span class="tag tag-yellow">{{ flag }}</span>
-            }
-        </div>
-        }
     </div>
 
     @if (latheData().sensors && latheData().sensors!.length > 0) {

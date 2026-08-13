@@ -12,8 +12,11 @@ import { Icon } from '../../../../shared/icon/icon';
 export class FleetPlantView {
     // MOCK: layout físico real da Planta D depende de asset do Figma (pendência de design).
     readonly plantSectors = input.required<[string, LatheData[]][]>();
+    /** Fase 2.1 (redesenho): distingue "planta sem tornos" (nunca acontece) de "busca vazia aqui". */
+    readonly isSearching = input<boolean>(false);
 
     readonly select = output<LatheData>();
+    readonly clearSearch = output<void>();
 
     protected STATUS_META = STATUS_META;
 }

@@ -72,6 +72,9 @@ const PATHS: Record<string, string> = {
         '<path d="M10 18H18V20H10z"/><path d="M10 13H22V15H10z"/><path d="M10 23H15V25H10z"/><path d="M25,5H22V4a2,2,0,0,0-2-2H12a2,2,0,0,0-2,2V5H7A2,2,0,0,0,5,7V28a2,2,0,0,0,2,2H25a2,2,0,0,0,2-2V7A2,2,0,0,0,25,5ZM12,4h8V8H12ZM25,28H7V7h3v3H22V7h3z"/>',
     'chart-line':
         '<path d="M4.67,28l6.39-12,7.3,6.49a2,2,0,0,0,1.7.47,2,2,0,0,0,1.42-1.07L27,10.9,25.18,10,19.69,21l-7.3-6.49A2,2,0,0,0,10.71,14a2,2,0,0,0-1.42,1L4,25V2H2V28a2,2,0,0,0,2,2H30V28z"/>',
+    help: '<path d="M16,2A14,14,0,1,0,30,16,14,14,0,0,0,16,2Zm0,26A12,12,0,1,1,28,16,12,12,0,0,1,16,28Z"/><path d="M15 21H17V23H15z"/><path d="M16,6a5.0058,5.0058,0,0,0-5,5h2a3,3,0,1,1,3,3,1,1,0,0,0-1,1v3h2V15.9A5,5,0,0,0,16,6Z"/>',
+    'grip-vertical':
+        '<circle cx="12" cy="8" r="2"/><circle cx="20" cy="8" r="2"/><circle cx="12" cy="16" r="2"/><circle cx="20" cy="16" r="2"/><circle cx="12" cy="24" r="2"/><circle cx="20" cy="24" r="2"/>',
 };
 
 @Component({
@@ -82,6 +85,8 @@ const PATHS: Record<string, string> = {
         [attr.height]="size()"
         viewBox="0 0 32 32"
         fill="currentColor"
+        aria-hidden="true"
+        focusable="false"
         [innerHTML]="svg()"
     ></svg>`,
 })

@@ -1,6 +1,6 @@
 @if (isOpen()) {
 <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div class="absolute inset-0 modal-overlay-scrim" (click)="close.emit()"></div>
+    <div class="absolute inset-0 modal-overlay-scrim" aria-hidden="true" (click)="close.emit()"></div>
 
     <div
         role="dialog"
@@ -36,10 +36,18 @@
             </div>
 
             <div class="space-y-2.5">
-                <label class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wide"
+                <label
+                    for="scheduler-type"
+                    class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wide"
                     >Tipo de Manutenção</label
                 >
-                <select [ngModel]="type()" (ngModelChange)="type.set($event)" name="type" class="input-field">
+                <select
+                    id="scheduler-type"
+                    [ngModel]="type()"
+                    (ngModelChange)="type.set($event)"
+                    name="type"
+                    class="input-field"
+                >
                     <option value="preventive">Preventiva</option>
                     <option value="predictive">Preditiva</option>
                     <option value="corrective">Corretiva</option>
@@ -48,8 +56,13 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="space-y-2.5">
-                    <label class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wide">Data</label>
+                    <label
+                        for="scheduler-date"
+                        class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wide"
+                        >Data</label
+                    >
                     <input
+                        id="scheduler-date"
                         type="date"
                         name="date"
                         [ngModel]="date()"
@@ -59,10 +72,13 @@
                     />
                 </div>
                 <div class="space-y-2.5">
-                    <label class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wide"
+                    <label
+                        for="scheduler-time"
+                        class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wide"
                         >Horário</label
                     >
                     <input
+                        id="scheduler-time"
                         type="time"
                         name="time"
                         [ngModel]="time()"
@@ -74,10 +90,13 @@
             </div>
 
             <div class="space-y-2.5">
-                <label class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wide"
+                <label
+                    for="scheduler-technician"
+                    class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wide"
                     >Técnico Responsável</label
                 >
                 <input
+                    id="scheduler-technician"
                     type="text"
                     name="technician"
                     placeholder="Nome completo"
@@ -89,10 +108,13 @@
             </div>
 
             <div class="space-y-2.5">
-                <label class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wide"
+                <label
+                    for="scheduler-notes"
+                    class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wide"
                     >Observações</label
                 >
                 <textarea
+                    id="scheduler-notes"
                     name="notes"
                     placeholder="Adicione detalhes adicionais aqui..."
                     rows="3"

@@ -6,6 +6,8 @@ import {
     mockOperationalState,
     OPERATIONAL_MODE_LABEL,
     OPERATIONAL_HEALTH_LABEL,
+    OPERATIONAL_SEVERITY_LABEL,
+    OPERATIONAL_SEVERITY_TAG,
 } from '../../core/data/operational-state.mock';
 import { Icon } from '../../shared/icon/icon';
 
@@ -143,6 +145,8 @@ export class LatheDashboard {
     protected operationalState = computed(() => mockOperationalState(this.latheData()));
     protected modeLabel = OPERATIONAL_MODE_LABEL;
     protected healthLabel = OPERATIONAL_HEALTH_LABEL;
+    protected severityLabel = OPERATIONAL_SEVERITY_LABEL;
+    protected severityTag = OPERATIONAL_SEVERITY_TAG;
 
     protected colorFor(c: SensorCardData): string {
         return c.alert ? c.alertColor : (c.okColor ?? 'color-mix(in srgb, var(--foreground) 55%, transparent)');

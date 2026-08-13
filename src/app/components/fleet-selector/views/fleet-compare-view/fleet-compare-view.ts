@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output, signal } f
 import { LatheData } from '../../../../core/models/fleet.model';
 import { STATUS_META } from '../../../../core/lib/status';
 import { svgPath, seededSeries } from '../../../../core/lib/sparkline';
+import { normalizeSearch } from '../../../../core/lib/text';
 import { Icon } from '../../../../shared/icon/icon';
 
 /** Métricas exibidas na tabela comparativa, em ordem de apresentação. */
@@ -96,7 +97,8 @@ export class FleetCompareView {
     protected metrics = COMPARE_METRICS;
     protected maxCompare = MAX_COMPARE;
 
-    /** IDs das máquinas selecionadas para comparação (máx. MAX_COMPARE). */
+    /** IDs das máquinas selecionadas para comparação (máx. MAX_COMPARE) — a ordem do array
+     *  é a ordem das colunas da tabela comparativa abaixo. */
     protected selectedIds = signal<string[]>([]);
     /** Texto de busca no picker. */
     protected pickerSearch = signal('');
@@ -111,9 +113,9 @@ export class FleetCompareView {
     /** Máquinas disponíveis para adicionar (não selecionadas, filtradas pela busca). */
     protected availableLathes = computed(() => {
         const ids = new Set(this.selectedIds());
-        const q = this.pickerSearch().toLowerCase();
+        const q = normalizeSearch(this.pickerSearch());
         return this.lathes().filter(
-            (l) => !ids.has(l.id) && (l.name.toLowerCase().includes(q) || l.id.toLowerCase().includes(q)),
+            (l) => !ids.has(l.id) && (normalizeSearch(l.name).includes(q) || normalizeSearch(l.id).includes(q)),
         );
     });
 

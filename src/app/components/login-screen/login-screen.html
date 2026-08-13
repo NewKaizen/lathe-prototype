@@ -1,7 +1,9 @@
 <div class="min-h-screen w-full bg-background flex flex-col selection:bg-primary/20 relative overflow-hidden">
     <!-- Manchas de cor desfocadas, emergindo das laterais — único toque de glassmorfismo,
          restrito a esta tela. O resto do app segue flat/Carbon (ver theme.css). -->
-    <div class="pointer-events-none absolute -left-28 -top-20 w-[26rem] h-[26rem] rounded-full bg-primary/25 blur-[110px]"></div>
+    <div
+        class="pointer-events-none absolute -left-28 -top-20 w-[26rem] h-[26rem] rounded-full bg-primary/25 blur-[110px]"
+    ></div>
     <div
         class="pointer-events-none absolute -left-16 bottom-[-6rem] w-[22rem] h-[22rem] rounded-full blur-[110px]"
         style="background: var(--status-purple); opacity: 0.18"
@@ -37,18 +39,23 @@
                     <span class="font-semibold text-foreground">precisão digital.</span>
                 </h1>
                 <p class="text-muted-foreground mt-5 text-[15px] text-pretty">
-                    Telemetria em tempo real de cada torno operado pela equipe do Bloco D — vibração, temperatura e
-                    eficiência, sempre à vista.
+                    Acompanhe o ciclo de vida de cada máquina por meio de seu gêmeo digital, reunindo monitoramento,
+                    histórico e indicadores para decisões mais precisas.
                 </p>
 
                 <div
                     class="mt-10 p-8 text-left border border-border/70"
-                    style="background: color-mix(in srgb, var(--card) 70%, transparent); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px)"
+                    style="
+                        background: color-mix(in srgb, var(--card) 70%, transparent);
+                        backdrop-filter: blur(20px);
+                        -webkit-backdrop-filter: blur(20px);
+                    "
                 >
                     <form (ngSubmit)="onSubmit()" class="space-y-5">
                         <div class="space-y-1.5">
-                            <label class="text-overline text-muted-foreground">Usuário</label>
+                            <label for="login-username" class="text-overline text-muted-foreground">Usuário</label>
                             <input
+                                id="login-username"
                                 type="text"
                                 name="username"
                                 [ngModel]="username()"
@@ -62,9 +69,10 @@
                         </div>
 
                         <div class="space-y-1.5">
-                            <label class="text-overline text-muted-foreground">Senha</label>
+                            <label for="login-password" class="text-overline text-muted-foreground">Senha</label>
                             <div class="relative">
                                 <input
+                                    id="login-password"
                                     [type]="showPassword() ? 'text' : 'password'"
                                     name="password"
                                     [ngModel]="password()"

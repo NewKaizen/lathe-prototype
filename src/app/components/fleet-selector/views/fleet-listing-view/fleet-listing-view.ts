@@ -25,7 +25,6 @@ const STATUS_ORDER: LatheStatus[] = ['critical', 'warning', 'maintenance', 'oper
 })
 export class FleetListingView {
     readonly totalCount = input.required<number>();
-    readonly search = input<string>('');
     readonly filter = input<FilterStatus>('all');
     readonly layoutMode = input.required<FleetLayoutMode>();
     readonly grouped = input.required<[string, LatheData[]][]>();
@@ -35,12 +34,15 @@ export class FleetListingView {
     readonly collapsedSectors = input.required<Set<string>>();
     readonly allCollapsed = input.required<boolean>();
     readonly counts = input.required<Record<LatheStatus, number>>();
+    readonly page = input.required<number>();
+    readonly totalPages = input.required<number>();
 
-    readonly searchChange = output<string>();
     readonly filterChange = output<FilterStatus>();
     readonly layoutModeChange = output<FleetLayoutMode>();
     readonly toggleSector = output<string>();
     readonly toggleAllSectors = output<void>();
+    readonly pageChange = output<number>();
+    readonly clearFilters = output<void>();
     readonly select = output<LatheData>();
 
     protected statusFilters = FILTERS;

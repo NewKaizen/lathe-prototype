@@ -47,6 +47,7 @@ export class DigitalTwin implements AfterViewInit, OnDestroy {
     private scene: Scene | null = null;
     private rpm = 0;
     private resizeHandler = () => this.engine?.resize();
+    private resizeObserver: ResizeObserver | null = null;
 
     constructor() {
         effect(() => {
@@ -60,6 +61,7 @@ export class DigitalTwin implements AfterViewInit, OnDestroy {
 
     ngOnDestroy(): void {
         window.removeEventListener('resize', this.resizeHandler);
+        this.resizeObserver?.disconnect();
         this.scene?.dispose();
         this.engine?.dispose();
     }
@@ -158,6 +160,11 @@ export class DigitalTwin implements AfterViewInit, OnDestroy {
 
         engine.runRenderLoop(() => scene.render());
         window.addEventListener('resize', this.resizeHandler);
+
+        // Container pode mudar de largura sem a viewport mudar (ex.: recolher a sidebar) —
+        // window 'resize' sozinho não captura isso.
+        this.resizeObserver = new ResizeObserver(() => this.engine?.resize());
+        this.resizeObserver.observe(canvas);
     }
 
     private material(name: string, scene: Scene, diffuse: Color3, specular?: Color3): StandardMaterial {

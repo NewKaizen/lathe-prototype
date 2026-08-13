@@ -7,7 +7,7 @@ import { Icon } from '../icon/icon';
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [Icon],
     template: `
-        <div class="fixed top-5 right-5 z-[100] flex flex-col gap-2 w-[340px] max-w-[calc(100vw-2.5rem)]">
+        <div class="fixed top-[105px] right-5 z-[100] flex flex-col gap-2 w-[340px] max-w-[calc(100vw-2.5rem)]">
             @for (t of toast.toasts(); track t.id) {
                 <div
                     class="bg-card border border-border border-l-[3px] px-4 py-3 flex items-start gap-3 animate-fade-in-up"

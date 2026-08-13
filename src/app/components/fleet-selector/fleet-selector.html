@@ -1,81 +1,42 @@
-<div class="min-h-screen w-full bg-background relative overflow-y-auto custom-scrollbar selection:bg-primary/20">
-    <!-- Sidebar desktop -->
+<div
+    #scrollRoot
+    class="min-h-screen w-full bg-background relative overflow-y-auto scrollbar-hide selection:bg-primary/20"
+>
+    <!-- Sidebar desktop — encosta embaixo da topbar (não atrás dela) em todo o app agora. -->
     <aside
-        class="fixed inset-y-0 left-0 z-30 hidden md:flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-200 overflow-y-auto custom-scrollbar"
-        [class]="isSidebarCollapsed() ? 'w-[96px] px-3 py-5' : 'w-[320px] px-6 py-7'"
+        class="fixed left-0 bottom-0 z-30 hidden md:flex flex-col border-r border-sidebar-border bg-sidebar py-7 transition-[width,padding] duration-200 overflow-y-auto custom-scrollbar"
+        [class]="isSidebarCollapsed() ? 'w-[96px] px-3' : 'w-[320px] px-6'"
+        [style.top.px]="topbarHeightPx"
     >
-        <div
-            class="shrink-0 flex items-center mb-6"
-            [class]="isSidebarCollapsed() ? 'justify-center' : 'justify-between'"
-        >
-            <div class="flex items-center gap-2">
-                <div class="w-7 h-7 bg-foreground flex items-center justify-center shrink-0">
-                    <app-icon name="activity" [size]="16" class="text-background" />
-                </div>
-                @if (!isSidebarCollapsed()) {
-                <span class="text-[15px] font-semibold text-foreground">senai digital</span>
-                }
-            </div>
+        <nav class="shrink-0 space-y-1" aria-label="Navegação principal">
+            @for (item of navItems; track item.id) {
+            <!-- Ícone fica sempre na mesma posição (padding fixo do .side-nav-link) — só o rótulo
+                 encolhe/desaparece suavemente via max-width+opacity, sem o ícone "pular" pro
+                 centro ao recolher. -->
             <button
-                (click)="isSidebarCollapsed.set(!isSidebarCollapsed())"
-                [attr.aria-label]="isSidebarCollapsed() ? 'Expandir sidebar' : 'Recolher sidebar'"
-                class="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-150"
+                (click)="goTo(item.id)"
+                [attr.aria-current]="activeNavId() === item.id ? 'page' : null"
+                [attr.title]="isSidebarCollapsed() ? item.label : null"
+                class="side-nav-link"
+                [class.side-nav-link-active]="activeNavId() === item.id"
             >
-                <app-icon [name]="isSidebarCollapsed() ? 'panel-left-open' : 'panel-left-close'" [size]="16" />
-            </button>
-        </div>
-
-        @if (!isSidebarCollapsed()) {
-        <div class="shrink-0 mb-5 pb-5 border-b border-sidebar-border">
-            <div class="flex items-center gap-2 mb-1 px-1">
-                <span class="w-2.5 h-2.5 rounded-full bg-[var(--status-green)]"></span>
-                <h2 class="text-[15px] font-semibold text-foreground leading-tight">Monitor de frota</h2>
-            </div>
-            <p class="text-[13px] text-muted-foreground px-1">
-                Telemetria em tempo real · {{ lathes().length }} tornos
-            </p>
-        </div>
-        }
-
-        <nav class="shrink-0 space-y-4" aria-label="Navegação principal">
-            @for (group of navGroups; track group.title) {
-            <div>
-                @if (!isSidebarCollapsed()) {
-                <p class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 px-1">
-                    {{ group.title }}
-                </p>
-                }
-                <div class="space-y-1">
-                    @for (item of group.items; track item.id) {
-                    <button
-                        (click)="goTo(item.id)"
-                        [attr.aria-current]="activeNavId() === item.id ? 'page' : null"
-                        [attr.title]="isSidebarCollapsed() ? item.label : null"
-                        class="side-nav-link"
-                        [class.side-nav-link-active]="activeNavId() === item.id"
-                        [class]="isSidebarCollapsed() ? 'justify-center px-2.5' : ''"
+                <span class="flex items-center gap-3 min-w-0">
+                    <app-icon [name]="item.icon" [size]="20" class="shrink-0" />
+                    <span
+                        class="font-medium text-[14px] whitespace-nowrap overflow-hidden transition-all duration-200"
+                        [style.max-width.px]="isSidebarCollapsed() ? 0 : 160"
+                        [style.opacity]="isSidebarCollapsed() ? 0 : 1"
+                        >{{ item.label }}</span
                     >
-                        <span
-                            class="flex items-center"
-                            [class.justify-center]="isSidebarCollapsed()"
-                            [class.gap-3]="!isSidebarCollapsed()"
-                        >
-                            <app-icon [name]="item.icon" [size]="20" />
-                            @if (!isSidebarCollapsed()) {
-                            <span class="font-medium text-[14px]">{{ item.label }}</span>
-                            }
-                        </span>
-                        @if (!isSidebarCollapsed() && item.id === 'alerts' && alertCount() > 0) {
-                        <span
-                            class="ml-3 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-[var(--status-red)] px-1.5 text-[10px] font-bold text-white"
-                        >
-                            {{ alertCount() > 9 ? '9+' : alertCount() }}
-                        </span>
-                        }
-                    </button>
-                    }
-                </div>
-            </div>
+                </span>
+                @if (!isSidebarCollapsed() && item.id === 'fleet' && alertCount() > 0) {
+                <span
+                    class="ml-3 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-[var(--status-red)] px-1.5 text-[10px] font-bold text-white"
+                >
+                    {{ alertCount() > 9 ? '9+' : alertCount() }}
+                </span>
+                }
+            </button>
             }
         </nav>
 
@@ -83,63 +44,34 @@
 
         @if (!isSidebarCollapsed()) {
         <!-- MOCK: card decorativo — ligar ao status real de conexão via BaseSocketService.connectionStatus$ quando integrado -->
-        <div class="shrink-0 tile p-4 mb-4">
-            <span class="tag tag-blue mb-2">Conectado</span>
-            <h4 class="text-[13px] font-semibold text-foreground leading-tight flex items-center gap-1.5 mt-2">
-                <app-icon name="activity" [size]="14" /> Broker MQTT ativo
-            </h4>
-            <p class="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-                Fluxo de telemetria sincronizado com a frota.
-            </p>
-            <div class="flex items-end justify-between mt-3">
-                <span>
-                    <span class="text-[22px] font-light text-foreground tabular-nums metric-display"
-                        >{{ lathes().length }}</span
-                    >
-                    <span class="text-[11px] text-muted-foreground ml-1">tornos</span>
-                </span>
-            </div>
+        <div class="shrink-0 tile p-4 mb-4 flex items-center justify-between gap-2">
+            <span class="tag tag-blue">Conectado</span>
+            <span class="text-[13px] text-muted-foreground">
+                <span class="text-foreground font-semibold tabular-nums">{{ lathes().length }}</span> tornos
+            </span>
         </div>
         }
-
-        <div class="shrink-0 flex items-center" [class]="isSidebarCollapsed() ? 'justify-center' : 'justify-between'">
-            @if (!isSidebarCollapsed()) {
-            <div class="flex items-center gap-2 min-w-0">
-                <div class="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-                    <app-icon name="user" [size]="14" class="text-primary" />
-                </div>
-                <span class="text-[12px] text-muted-foreground truncate">{{ userName() }}</span>
-            </div>
-            }
-            <div class="flex items-center gap-1">
-                <button
-                    (click)="isSettingsOpen.set(true)"
-                    title="Configurações"
-                    class="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-150"
-                >
-                    <app-icon name="settings-2" [size]="16" />
-                </button>
-                <button
-                    (click)="logout.emit()"
-                    title="Sair"
-                    class="p-2 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-150"
-                >
-                    <app-icon name="log-out" [size]="16" />
-                </button>
-            </div>
-        </div>
     </aside>
 
-    <!--
-        Nav mobile — 5 ícones curados + 6º botão "Mais" que abre a sheet com todos os NAV_GROUPS.
-        Fase F: o botão "Mais" escala para qualquer página nova futura sem tocar nos 5 slots curados.
-    -->
+    <!-- Botão de recolher flutuante, centralizado bem em cima da borda direita da sidebar —
+         padrão de painel redimensionável (Notion/VS Code). -->
+    <button
+        (click)="isSidebarCollapsed.set(!isSidebarCollapsed())"
+        [attr.aria-label]="isSidebarCollapsed() ? 'Expandir sidebar' : 'Recolher sidebar'"
+        class="hidden md:flex fixed z-40 -translate-x-1/2 -translate-y-1/2 w-7 h-7 items-center justify-center rounded-full border border-sidebar-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors duration-200"
+        [style.left.px]="isSidebarCollapsed() ? 96 : 320"
+        [style.top]="'calc(50% + ' + topbarHeightPx / 2 + 'px)'"
+    >
+        <app-icon [name]="isSidebarCollapsed() ? 'panel-left-open' : 'panel-left-close'" [size]="14" />
+    </button>
+
+    <!-- Nav mobile — mesmos 5 itens da sidebar (Fase 2.2), sem overflow "Mais". -->
     <nav
         class="fixed z-20 flex bottom-0 left-0 right-0 h-14 flex-row items-center justify-between px-2 md:hidden tile border-t"
         aria-label="Navegação principal"
     >
         <div class="flex gap-1 w-full justify-around">
-            @for (item of mobileNavItems; track item.id) {
+            @for (item of navItems; track item.id) {
             <button
                 (click)="goTo(item.id)"
                 [attr.aria-label]="item.label"
@@ -150,7 +82,7 @@
                 [class.text-muted-foreground]="activeNavId() !== item.id"
             >
                 <app-icon [name]="item.icon" [size]="20" />
-                @if (item.id === 'alerts' && alertCount() > 0) {
+                @if (item.id === 'fleet' && alertCount() > 0) {
                 <span
                     class="absolute top-1 right-1 w-4 h-4 rounded-full bg-[var(--status-red)] text-white text-[10px] font-bold flex items-center justify-center"
                 >
@@ -159,143 +91,127 @@
                 }
             </button>
             }
-
-            <!-- 6º botão "Mais" — abre a sheet com NAV_GROUPS completo -->
-            <button
-                (click)="isMobileMoreOpen.set(true)"
-                aria-label="Mais opções de navegação"
-                [attr.aria-expanded]="isMobileMoreOpen()"
-                class="relative p-2.5 transition-colors duration-150 text-muted-foreground"
-                [class.bg-foreground]="isMobileMoreOpen()"
-                [class.text-background]="isMobileMoreOpen()"
-            >
-                <app-icon name="more-horizontal" [size]="20" />
-            </button>
         </div>
     </nav>
 
-    <!--
-        Fase F: Sheet "Mais" mobile — lista todos os NAV_GROUPS, fecha com ESC, clique fora ou ao selecionar item.
-        Sem blur, sem glass — tile/modal-overlay-scrim, consistente com o padrão do app (maintenance-scheduler).
-    -->
-    @if (isMobileMoreOpen()) {
-    <div class="fixed inset-0 z-40 md:hidden flex flex-col justify-end">
-        <!-- Overlay scrim — clique fora fecha -->
-        <div class="absolute inset-0 modal-overlay-scrim" (click)="isMobileMoreOpen.set(false)"></div>
-
-        <!-- Sheet -->
-        <div
-            class="relative tile border-t max-h-[70vh] overflow-y-auto custom-scrollbar animate-fade-in"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Mais opções de navegação"
-        >
-            <div class="flex items-center justify-between px-5 py-4 border-b border-border/50">
-                <span class="text-[14px] font-semibold text-foreground">Navegação</span>
-                <button
-                    (click)="isMobileMoreOpen.set(false)"
-                    aria-label="Fechar menu"
-                    class="p-1.5 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                    <app-icon name="x" [size]="16" />
-                </button>
+    <!-- Topbar com logo à esquerda + busca centralizada — inspirada na Descomplica. Fixa no topo
+         (não sticky: o scroll real acontece no documento, não em #scrollRoot, então sticky não
+         gruda) — o conteúdo rola por baixo dela. A sidebar encosta embaixo dela (ver
+         [style.top.px] no <aside>), não atrás. -->
+    <div
+        class="fixed top-0 left-0 right-0 z-40 flex items-center border-b border-border bg-card px-6"
+        [style.height.px]="topbarHeightPx"
+    >
+        <!-- Logo intocado pelo recolher da sidebar — mora na topbar agora, não tem mais relação
+             com o estado dela. -->
+        <div class="hidden md:flex shrink-0 items-center gap-2 w-[296px]">
+            <div class="w-7 h-7 bg-foreground flex items-center justify-center shrink-0">
+                <app-icon name="activity" [size]="16" class="text-background" />
             </div>
+            <span class="text-[15px] font-semibold text-foreground truncate">senai digital</span>
+        </div>
+        <div class="flex-1 flex justify-center">
+            <div class="w-full max-w-xl">
+                <app-command-search
+                    [lathes]="lathes()"
+                    (select)="onCommandSelect($event)"
+                    (openReference)="openHelp.emit()"
+                />
+            </div>
+        </div>
 
-            <div class="px-4 py-3 space-y-5">
-                @for (group of navGroups; track group.title) {
-                <div>
-                    <p class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 px-1">
-                        {{ group.title }}
-                    </p>
-                    <div class="space-y-0.5">
-                        @for (item of group.items; track item.id) {
-                        <button
-                            (click)="goTo(item.id)"
-                            [attr.aria-current]="activeNavId() === item.id ? 'page' : null"
-                            class="w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors duration-150 rounded-sm"
-                            [class.bg-foreground]="activeNavId() === item.id"
-                            [class.text-background]="activeNavId() === item.id"
-                            [class.text-foreground]="activeNavId() !== item.id"
-                            [class.hover:bg-secondary]="activeNavId() !== item.id"
-                        >
-                            <app-icon [name]="item.icon" [size]="18" class="shrink-0" />
-                            <span class="font-medium text-[14px]">{{ item.label }}</span>
-                            @if (item.id === 'alerts' && alertCount() > 0) {
-                            <span
-                                class="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--status-red)] px-1 text-[10px] font-bold text-white"
-                            >
-                                {{ alertCount() > 9 ? '9+' : alertCount() }}
-                            </span>
-                            }
-                        </button>
-                        }
+        <!-- Notificações + perfil — saíram da sidebar, moram aqui na topbar (canto direito),
+             estilo Descomplica: sino de notificações à esquerda do avatar. -->
+        <div class="flex shrink-0 items-center gap-2 pl-4">
+            <app-notifications-bell [lathes]="lathes()" (selectLathe)="select.emit($event)" />
+
+            <div class="relative">
+                <button
+                    (click)="isProfileMenuOpen.set(!isProfileMenuOpen())"
+                    [attr.aria-label]="'Perfil de ' + userName()"
+                    [attr.aria-expanded]="isProfileMenuOpen()"
+                    title="{{ userName() }}"
+                    class="w-11 h-11 rounded-full border border-border bg-card hover:bg-secondary flex items-center justify-center transition-colors duration-150 shrink-0"
+                    [class.text-foreground]="isProfileMenuOpen()"
+                    [class.text-primary]="!isProfileMenuOpen()"
+                >
+                    <app-icon name="user" [size]="18" />
+                </button>
+
+                @if (isProfileMenuOpen()) {
+                <!-- Backdrop invisível — fecha o popover ao clicar fora, mesmo padrão simples
+                     usado aqui (sem HostListener, componente inline). -->
+                <div class="fixed inset-0 z-40" aria-hidden="true" (click)="isProfileMenuOpen.set(false)"></div>
+                <div
+                    class="absolute right-0 top-[calc(100%+8px)] z-50 w-56 border border-border/60 bg-card overflow-hidden animate-fade-in"
+                    role="menu"
+                >
+                    <div class="px-4 py-3 border-b border-border/50">
+                        <p class="text-[13px] font-semibold text-foreground truncate">{{ userName() }}</p>
                     </div>
-                </div>
-                }
-
-                <!-- Ações de conta no rodapé da sheet -->
-                <div class="border-t border-border/50 pt-4 pb-2 flex gap-2">
                     <button
-                        (click)="isSettingsOpen.set(true); isMobileMoreOpen.set(false)"
-                        class="flex-1 flex items-center justify-center gap-2 h-10 border border-border bg-card hover:bg-secondary text-[13px] font-medium text-foreground transition-colors"
+                        type="button"
+                        role="menuitem"
+                        (click)="isProfileMenuOpen.set(false); isSettingsOpen.set(true)"
+                        class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-foreground hover:bg-secondary/40 transition-colors text-left"
                     >
-                        <app-icon name="settings-2" [size]="16" />
+                        <app-icon name="settings-2" [size]="15" class="text-muted-foreground" />
                         Configurações
                     </button>
                     <button
-                        (click)="logout.emit(); isMobileMoreOpen.set(false)"
-                        class="flex-1 flex items-center justify-center gap-2 h-10 border border-border bg-card hover:bg-secondary text-[13px] font-medium text-muted-foreground transition-colors"
+                        type="button"
+                        role="menuitem"
+                        (click)="isProfileMenuOpen.set(false); logout.emit()"
+                        class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-foreground hover:bg-secondary/40 transition-colors text-left"
                     >
-                        <app-icon name="log-out" [size]="16" />
+                        <app-icon name="log-out" [size]="15" class="text-muted-foreground" />
                         Sair
                     </button>
                 </div>
+                }
             </div>
         </div>
     </div>
-    }
+
+    <!-- Espaçador — reserva a altura da topbar fixa, já que ela saiu do fluxo normal do
+         documento (o conteúdo passa a rolar por baixo dela). Mantém py-12/md:py-16 do conteúdo
+         abaixo intactos e responsivos, em vez de sobrescrever com um valor fixo. -->
+    <div [style.height.px]="topbarHeightPx"></div>
 
     <!-- Main content -->
     <div
         class="max-w-7xl mx-auto px-6 py-12 md:py-16 pb-20 md:pb-16"
         [class]="isSidebarCollapsed() ? 'md:pl-[128px]' : 'md:pl-[352px]'"
     >
-        <!-- Trilha de navegação — sempre visível, mesmo nas páginas de documento. -->
-        <nav class="flex items-center flex-wrap gap-1.5 text-[12px] mb-5" aria-label="Caminho de navegação">
-            @for (crumb of breadcrumb(); track $index; let last = $last) { @if (!last && crumb.view) {
-            <button
-                (click)="goTo(crumb.view)"
-                class="text-muted-foreground hover:text-foreground transition-colors font-medium"
-            >
-                {{ crumb.label }}
-            </button>
-            <app-icon name="chevron-right" [size]="12" class="text-muted-foreground/50" />
-            } @else {
-            <span class="text-foreground font-semibold truncate max-w-[16rem]">{{ crumb.label }}</span>
-            } }
-        </nav>
-
-        <!-- Busca interna — sempre acessível, não só na Início. -->
-        <div class="mb-8 max-w-xl">
-            <app-command-search
-                [lathes]="lathes()"
-                (select)="onCommandSelect($event)"
-                (openReference)="goTo('commands')"
-            />
+        @if (selectedLathe(); as selMachine) {
+        <app-fleet-machine-detail-view
+            [lathe]="selMachine"
+            [history]="latheHistory()"
+            [tick]="tick()"
+            [activeTab]="machineTab()"
+            [scheduledActive]="latheMaintenance()"
+            [scheduledResolved]="latheMaintenanceResolved()"
+            [maintenanceHistory]="maintenanceHistoryForSelected()"
+            (activeTabChange)="machineTabChange.emit($event)"
+            (back)="deselect.emit()"
+            (openScheduler)="isSchedulerOpen.set(true)"
+            (updateStatus)="updateMaintenanceStatus($event.id, $event.status)"
+        />
+        } @else { @if (fleetView() === 'home') {
+        <!-- Boas-vindas — a busca já mora na topbar (sempre visível), então aqui fica só o
+             cabeçalho de saudação, sem duplicar o campo. -->
+        <div class="flex flex-col items-center text-center py-6 md:py-8 mb-8">
+            <h1 class="text-3xl md:text-5xl font-light text-foreground">Bem-vindo de volta, {{ userName() }}!</h1>
         </div>
-
-        @if (fleetView() !== 'report-detail' && fleetView() !== 'cost-detail') {
+        <app-fleet-home-view [overview]="overview()" [counts]="counts()" [totalCount]="lathes().length" />
+        } @else { @if (fleetView() !== 'report-detail' && fleetView() !== 'cost-detail') {
         <div class="mb-10">
             <div class="flex items-center gap-3 mb-2">
                 <app-icon name="activity" [size]="20" class="text-foreground" />
                 <p class="text-overline text-muted-foreground">Telemetria</p>
             </div>
             <h1 class="text-4xl md:text-5xl font-light text-foreground">{{ viewTitles[fleetView()] }}</h1>
-            @if (fleetView() === 'home') {
-            <p class="text-muted-foreground mt-2 max-w-lg text-[15px]">
-                Bem-vindo de volta, {{ userName() }}. Aqui está um resumo da operação.
-            </p>
-            } @else if (fleetView() === 'fleet') {
+            @if (fleetView() === 'fleet') {
             <p class="text-muted-foreground mt-2 max-w-lg text-[15px]">
                 Selecione uma máquina para acessar a visualização em tempo real.
             </p>
@@ -303,53 +219,180 @@
             <p class="text-muted-foreground mt-2 max-w-lg text-[15px]">{{ viewSubtitles[fleetView()] }}</p>
             }
         </div>
-        }
-
-        @if (fleetView() === 'home') {
-        <app-fleet-home-view
-            [overview]="overview()"
-            [counts]="counts()"
-            [totalCount]="lathes().length"
-            [alertCount]="alertCount()"
-            (select)="select.emit($event)"
-            (navigate)="goTo($event)"
-        />
         } @if (fleetView() === 'fleet') {
+        <!-- Abas logo abaixo do cabeçalho, no mesmo layout usado em Relatórios. -->
+        <div
+            class="flex items-center gap-1 mb-6 border-b border-border overflow-x-auto overflow-y-hidden"
+            role="tablist"
+            aria-label="Seções da Frota"
+        >
+            @for (t of fleetTabs; track t.id) {
+            <button
+                role="tab"
+                [attr.aria-selected]="fleetTab() === t.id"
+                (click)="showFleetTab(t.id)"
+                class="shrink-0 whitespace-nowrap px-4 py-2.5 -mb-px text-[13px] font-semibold border-b-2 transition-colors"
+                [class.border-foreground]="fleetTab() === t.id"
+                [class.text-foreground]="fleetTab() === t.id"
+                [class.border-transparent]="fleetTab() !== t.id"
+                [class.text-muted-foreground]="fleetTab() !== t.id"
+            >
+                {{ t.label }}
+            </button>
+            }
+        </div>
+
+        <!-- Fase 2.1 (redesenho): tira dos "resquícios de 3 telas coladas" com um contexto
+             realmente compartilhado — contadores e busca acima das abas valem pras 3 seções. -->
+        <div class="flex flex-col sm:flex-row gap-3 mb-5 items-start sm:items-center">
+            <div class="relative w-full sm:flex-1 sm:min-w-[220px]">
+                <app-icon
+                    name="search"
+                    [size]="16"
+                    class="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+                />
+                <input
+                    type="text"
+                    placeholder="Buscar por nome, modelo ou linha..."
+                    aria-label="Buscar por nome, modelo ou linha"
+                    [ngModel]="search()"
+                    (ngModelChange)="onSearchChange($event)"
+                    class="w-full bg-card border border-border focus:border-primary text-[14px] pl-11 pr-10 h-[42px] text-foreground placeholder:text-muted-foreground transition-colors outline-none"
+                />
+                @if (search()) {
+                <button
+                    type="button"
+                    (click)="onSearchChange('')"
+                    aria-label="Limpar busca"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <app-icon name="x" [size]="14" />
+                </button>
+                }
+            </div>
+
+            @if (fleetTab() === 'listagem') {
+            <select
+                [ngModel]="filter()"
+                (ngModelChange)="onFilterChange($event)"
+                aria-label="Filtrar por status"
+                class="w-full sm:w-[240px] bg-card border border-border h-[42px] px-4 font-medium text-[13px] hover:bg-secondary/40 transition-colors outline-none"
+            >
+                @for (s of statusFilters; track s) {
+                <option [value]="s">
+                    {{ s === 'all' ? 'Todas as Máquinas (' + lathes().length + ')' : STATUS_META[s].label + ' (' +
+                    counts()[s] + ')' }}
+                </option>
+                }
+            </select>
+
+            @if (layoutMode() === 'grouped') {
+            <button
+                (click)="toggleAllSectors()"
+                class="shrink-0 flex items-center gap-1.5 h-[42px] px-4 border border-border bg-card hover:bg-secondary/40 text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+                <app-icon name="chevrons-up-down" [size]="14" />
+                {{ allCollapsed() ? 'Expandir tudo' : 'Recolher tudo' }}
+            </button>
+            }
+
+            <div
+                class="shrink-0 flex items-center h-[42px] border border-border bg-card"
+                role="group"
+                aria-label="Modo de visualização"
+            >
+                @for (m of layoutModes; track m.id) {
+                <button
+                    (click)="setLayoutMode(m.id)"
+                    [attr.aria-pressed]="layoutMode() === m.id"
+                    [attr.title]="m.label"
+                    [attr.aria-label]="m.label"
+                    class="flex items-center justify-center w-10 h-full border-l border-border first:border-l-0 transition-colors"
+                    [class.bg-foreground]="layoutMode() === m.id"
+                    [class.text-background]="layoutMode() === m.id"
+                    [class.text-muted-foreground]="layoutMode() !== m.id"
+                    [class.hover:text-foreground]="layoutMode() !== m.id"
+                    [class.hover:bg-secondary]="layoutMode() !== m.id"
+                >
+                    <app-icon [name]="m.icon" [size]="15" />
+                </button>
+                }
+            </div>
+            }
+        </div>
+
+        @if (fleetTab() === 'listagem') {
         <app-fleet-listing-view
             [totalCount]="lathes().length"
-            [search]="search()"
             [filter]="filter()"
             [layoutMode]="layoutMode()"
             [grouped]="grouped()"
-            [flatSorted]="flatSorted()"
+            [flatSorted]="paginatedFlatSorted()"
             [filtered]="filtered()"
             [isFiltering]="isFiltering()"
             [collapsedSectors]="collapsedSectors()"
             [allCollapsed]="allCollapsed()"
             [counts]="counts()"
-            (searchChange)="search.set($event)"
-            (filterChange)="filter.set($event)"
+            [page]="currentPage()"
+            [totalPages]="totalPages()"
+            (filterChange)="onFilterChange($event)"
             (layoutModeChange)="setLayoutMode($event)"
             (toggleSector)="toggleSector($event)"
             (toggleAllSectors)="toggleAllSectors()"
+            (pageChange)="onPageChange($event)"
+            (clearFilters)="clearListingFilters()"
             (select)="select.emit($event)"
         />
-        } @if (fleetView() === 'alerts') {
-        <app-fleet-alerts-view [urgentAlerts]="urgentAlerts()" (select)="select.emit($event)" />
-        } @if (fleetView() === 'maintenance') {
+        } @if (fleetTab() === 'alertas') {
+        <app-fleet-alerts-view
+            [urgentAlerts]="urgentAlertsFiltered()"
+            [isSearching]="isSearching()"
+            (clearSearch)="onSearchChange('')"
+            (select)="select.emit($event)"
+        />
+        } @if (fleetTab() === 'planta') {
+        <app-fleet-plant-view
+            [plantSectors]="plantSectors()"
+            [isSearching]="isSearching()"
+            (clearSearch)="onSearchChange('')"
+            (select)="select.emit($event)"
+        />
+        } } @if (fleetView() === 'maintenance') {
         <app-fleet-maintenance-view [maintenanceSorted]="maintenanceSorted()" (select)="select.emit($event)" />
-        } @if (fleetView() === 'overview') {
-        <app-fleet-overview-view
-            [overview]="overview()"
-            [counts]="counts()"
-            [totalCount]="lathes().length"
-            (select)="select.emit($event)"
-        />
-        } @if (fleetView() === 'plant') {
-        <app-fleet-plant-view [plantSectors]="plantSectors()" (select)="select.emit($event)" />
-        } @if (fleetView() === 'energy') {
-        <app-fleet-energy-view [energy]="energyEstimate()" [lathes]="lathes()" (openCost)="openCostDetail($event)" />
         } @if (fleetView() === 'reports') {
+        <!-- Fase 2.2: "Energia & Custos" virou aba dentro de Relatórios (antes item de nav separado). -->
+        <div
+            class="flex items-center gap-1 mb-6 border-b border-border"
+            role="tablist"
+            aria-label="Seções de Relatórios"
+        >
+            <button
+                role="tab"
+                [attr.aria-selected]="reportsTab() === 'relatorios'"
+                (click)="reportsTab.set('relatorios')"
+                class="px-4 py-2.5 -mb-px text-[13px] font-semibold border-b-2 transition-colors"
+                [class.border-foreground]="reportsTab() === 'relatorios'"
+                [class.text-foreground]="reportsTab() === 'relatorios'"
+                [class.border-transparent]="reportsTab() !== 'relatorios'"
+                [class.text-muted-foreground]="reportsTab() !== 'relatorios'"
+            >
+                Relatórios
+            </button>
+            <button
+                role="tab"
+                [attr.aria-selected]="reportsTab() === 'energia'"
+                (click)="reportsTab.set('energia')"
+                class="px-4 py-2.5 -mb-px text-[13px] font-semibold border-b-2 transition-colors"
+                [class.border-foreground]="reportsTab() === 'energia'"
+                [class.text-foreground]="reportsTab() === 'energia'"
+                [class.border-transparent]="reportsTab() !== 'energia'"
+                [class.text-muted-foreground]="reportsTab() !== 'energia'"
+            >
+                Energia & Custos
+            </button>
+        </div>
+
+        @if (reportsTab() === 'relatorios') {
         <app-fleet-reports-view
             [overview]="overview()"
             [counts]="counts()"
@@ -361,11 +404,9 @@
             (navigate)="goTo($event)"
             (openReport)="openReportDetail($event)"
         />
-        } @if (fleetView() === 'tips') {
-        <app-fleet-tips-view />
-        } @if (fleetView() === 'commands') {
-        <app-fleet-commands-view />
-        } @if (fleetView() === 'compare') {
+        } @if (reportsTab() === 'energia') {
+        <app-fleet-energy-view [energy]="energyEstimate()" [lathes]="lathes()" (openCost)="openCostDetail($event)" />
+        } } @if (fleetView() === 'compare') {
         <!-- Fase E: nova view de comparação entre máquinas -->
         <app-fleet-compare-view [lathes]="lathes()" (select)="select.emit($event)" />
         } @if (fleetView() === 'report-detail' && selectedReportKey(); as key) {
@@ -386,8 +427,14 @@
             [energy]="energyEstimate()"
             (back)="goTo('energy')"
         />
-        }
+        } } }
     </div>
 
     <app-user-settings-modal [isOpen]="isSettingsOpen()" [userName]="userName()" (close)="isSettingsOpen.set(false)" />
+    <app-maintenance-scheduler
+        [machine]="selectedLathe() ? { id: selectedLathe()!.id, name: selectedLathe()!.name, type: selectedLathe()!.model } : null"
+        [isOpen]="isSchedulerOpen()"
+        (close)="isSchedulerOpen.set(false)"
+        (schedule)="onScheduleSubmit($event)"
+    />
 </div>

@@ -1,4 +1,4 @@
-<div class="fixed inset-0 w-full h-full z-0 bg-background flex items-center justify-center">
+<div class="absolute inset-0 w-full h-full z-0 bg-background flex items-center justify-center">
     <canvas
         #canvas
         class="w-full h-full absolute inset-0 transition-opacity duration-500"
@@ -13,6 +13,7 @@
         <button
             (click)="resetCamera()"
             title="Resetar Câmera"
+            aria-label="Resetar Câmera"
             class="w-9 h-9 rounded-full bg-secondary/50 hover:bg-secondary text-foreground flex items-center justify-center transition-colors"
         >
             <app-icon name="rotate-ccw" [size]="16" />
@@ -20,21 +21,56 @@
     </div>
     }
 
-    <!-- MOCK: aguarda endpoint de stream do backend. Trocar por <img>/<video> quando disponível. -->
+    <!-- MOCK: aguarda endpoint de stream do backend. Fallback abaixo é um vídeo ilustrativo de um
+         torno em funcionamento (banco de vídeos públicos), não o torno real — trocar por <video>
+         do stream ao vivo quando disponível. -->
     <div
-        class="absolute inset-0 w-full h-full flex flex-col items-center justify-center gap-3 bg-black transition-opacity duration-500"
+        class="absolute inset-0 w-full h-full bg-black transition-opacity duration-500"
         [class.opacity-100]="mode() === 'camera'"
         [class.opacity-0]="mode() !== 'camera'"
         [class.pointer-events-none]="mode() !== 'camera'"
     >
-        <div class="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center">
-            <app-icon name="camera" [size]="28" class="text-white/60" />
+        <video
+            autoplay
+            loop
+            muted
+            playsinline
+            preload="none"
+            [muted]="true"
+            poster="https://images.pexels.com/videos/35772589/free-video-35772589.jpg"
+            class="absolute inset-0 w-full h-full object-cover grayscale"
+        >
+            <source
+                src="https://videos.pexels.com/video-files/35772589/15166286_1080_1920_30fps.mp4"
+                type="video/mp4"
+            />
+        </video>
+        <div class="absolute inset-0 bg-black/60"></div>
+
+        <!-- bottom-center: evita a sidebar (fixed left-0 z-30) e o botão global de Ajuda (top-right) -->
+        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3">
+            <div class="rounded-[var(--radius)] border border-white/10 bg-black/40 px-4 py-3">
+                <p class="text-[10px] text-white/50 uppercase tracking-widest">RPM</p>
+                <p class="text-[20px] font-semibold text-white tabular-nums">{{ latheData().rpm }}</p>
+            </div>
+            <div class="rounded-[var(--radius)] border border-white/10 bg-black/40 px-4 py-3">
+                <p class="text-[10px] text-white/50 uppercase tracking-widest">Temperatura</p>
+                <p class="text-[20px] font-semibold text-white tabular-nums">{{ latheData().temperature }}°C</p>
+            </div>
         </div>
-        <div class="text-center px-6">
-            <p class="text-white font-semibold text-[15px]">Aguardando integração de câmera</p>
-            <p class="text-white/50 text-[13px] mt-1 max-w-xs">
-                O stream ao vivo de {{ latheData().id }} ainda depende do endpoint de câmera do backend.
-            </p>
+
+        <!-- Oculto: com o vídeo de fallback já ilustrando a câmera, o aviso "aguardando
+             integração" fica redundante na tela. Mantido no código para religar depois. -->
+        <div class="hidden relative w-full h-full flex-col items-center justify-center gap-3">
+            <div class="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center">
+                <app-icon name="camera" [size]="28" class="text-white/60" />
+            </div>
+            <div class="text-center px-6">
+                <p class="text-white font-semibold text-[15px]">Aguardando integração de câmera</p>
+                <p class="text-white/50 text-[13px] mt-1 max-w-xs">
+                    O stream ao vivo de {{ latheData().id }} ainda depende do endpoint de câmera do backend.
+                </p>
+            </div>
         </div>
     </div>
 </div>

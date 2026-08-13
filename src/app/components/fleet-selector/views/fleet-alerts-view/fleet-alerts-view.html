@@ -1,4 +1,17 @@
-@if (urgentAlerts().length === 0) {
+@if (urgentAlerts().length === 0 && isSearching()) {
+<div class="flex flex-col items-center justify-center py-24 text-center">
+    <app-icon name="search" [size]="48" class="text-muted-foreground/30 mb-4" />
+    <h3 class="text-[17px] font-semibold text-foreground mb-1">Nenhum alerta encontrado</h3>
+    <p class="text-muted-foreground mb-4">Nenhuma máquina em alerta corresponde à busca atual.</p>
+    <button
+        type="button"
+        (click)="clearSearch.emit()"
+        class="px-4 h-9 border border-border bg-card hover:bg-secondary text-[13px] font-medium text-foreground transition-colors"
+    >
+        Limpar busca
+    </button>
+</div>
+} @else if (urgentAlerts().length === 0) {
 <div class="flex flex-col items-center justify-center py-24 text-center">
     <div class="w-16 h-16 rounded-full bg-[var(--status-green)]/10 flex items-center justify-center mb-4">
         <app-icon name="activity" [size]="32" class="text-[var(--status-green)]" />
@@ -9,25 +22,30 @@
 } @else {
 <div class="space-y-4">
     <p class="text-[13px] text-muted-foreground">
-        {{ urgentAlerts().length }} máquina{{ urgentAlerts().length > 1 ? 's' : '' }} requerem atenção
+        {{ urgentAlerts().length }} máquina{{ urgentAlerts().length > 1 ? 's' : '' }} {{ urgentAlerts().length > 1 ?
+        'requerem' : 'requer' }} atenção
     </p>
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-        @for (l of urgentAlerts(); track l.id) {
+        @for (a of alertDetails(); track a.lathe.id) {
         <button
             type="button"
-            (click)="select.emit(l)"
+            (click)="select.emit(a.lathe)"
             class="tile tile-interactive p-5 w-full text-left hover:border-primary/40 transition-colors"
         >
             <div class="flex items-center justify-between mb-4">
-                <span [class]="STATUS_META[l.status].badge">{{ STATUS_META[l.status].label }}</span>
-                <app-icon name="arrow-right" [size]="14" class="text-muted-foreground" aria-hidden="true" />
+                <span [class]="STATUS_META[a.lathe.status].badge">{{ STATUS_META[a.lathe.status].label }}</span>
+                <span class="text-[11px] text-muted-foreground">{{ formatDetectedAt(a.detectedAt) }}</span>
             </div>
-            <h3 class="font-semibold text-foreground text-[16px]">{{ l.name }}</h3>
-            <p class="text-[12px] text-muted-foreground mt-1">{{ l.model }}</p>
-            <div class="mt-4 flex items-center gap-4 text-[12px] text-muted-foreground">
-                <span>{{ l.temperature }}°C</span>
-                <span>{{ l.vibration.toFixed(1) }} mm/s</span>
-                <span [class]="efficiencyText(l.efficiency)" class="font-bold">{{ l.efficiency }}%</span>
+            <h3 class="font-semibold text-foreground text-[16px]">{{ a.lathe.name }}</h3>
+            <p class="text-[12px] text-muted-foreground mt-1">{{ a.lathe.model }}</p>
+            <div class="mt-4 flex items-center gap-4 text-[12px] text-muted-foreground flex-wrap">
+                <span>{{ a.lathe.temperature }}°C</span>
+                <span>{{ a.lathe.vibration.toFixed(1) }} mm/s</span>
+                <span [class]="efficiencyText(a.lathe.efficiency)" class="font-bold">{{ a.lathe.efficiency }}%</span>
+            </div>
+            <div class="mt-3 pt-3 border-t border-border/50 flex items-start gap-2">
+                <app-icon name="clipboard-list" [size]="14" class="text-primary shrink-0 mt-0.5" />
+                <span class="text-[12px] text-foreground/80">{{ a.suggestedAction }}</span>
             </div>
         </button>
         }

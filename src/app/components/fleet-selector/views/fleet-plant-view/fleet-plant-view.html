@@ -4,6 +4,22 @@
         Mapa esquemático por linha. O layout físico exato da planta ainda depende do protótipo Figma — por enquanto,
         cada zona representa uma linha de produção.
     </p>
+    @if (plantSectors().length === 0) {
+    <div class="flex flex-col items-center justify-center py-24 text-center">
+        <app-icon name="search" [size]="48" class="text-muted-foreground/30 mb-4" />
+        <h3 class="text-[17px] font-semibold text-foreground mb-1">Nenhum torno encontrado</h3>
+        <p class="text-muted-foreground mb-4">Nenhuma máquina corresponde à busca atual.</p>
+        @if (isSearching()) {
+        <button
+            type="button"
+            (click)="clearSearch.emit()"
+            class="px-4 h-9 border border-border bg-card hover:bg-secondary text-[13px] font-medium text-foreground transition-colors"
+        >
+            Limpar busca
+        </button>
+        }
+    </div>
+    } @else {
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         @for (entry of plantSectors(); track entry[0]) {
         <div class="tile p-5">
@@ -30,4 +46,5 @@
         </div>
         }
     </div>
+    }
 </div>

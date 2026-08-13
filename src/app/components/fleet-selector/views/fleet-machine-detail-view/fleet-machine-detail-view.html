@@ -1,0 +1,210 @@
+<div class="space-y-6">
+    <button
+        (click)="back.emit()"
+        class="flex items-center gap-1.5 text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+    >
+        <app-icon name="chevron-left" [size]="14" />
+        Voltar
+    </button>
+
+    <div class="tile p-6">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div class="min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="w-2 h-2 rounded-full shrink-0" [class]="meta().dot"></span>
+                    <span [class]="meta().badge">{{ meta().label }}</span>
+                </div>
+                <h1 class="text-3xl sm:text-4xl font-normal tracking-tight text-foreground mb-1">{{ lathe().name }}</h1>
+                <p class="text-[13px] text-muted-foreground">{{ lathe().model }} · {{ lathe().sector }}</p>
+            </div>
+            <div class="flex items-center gap-6 sm:gap-8 shrink-0">
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">
+                        Score de Operação
+                    </p>
+                    <div class="flex items-center gap-2">
+                        <span class="text-3xl sm:text-4xl metric-display text-foreground/40 tabular-nums"
+                            >{{ lathe().efficiency }}</span
+                        >
+                        <span class="mt-0.5" [class]="headline().badge">{{ headline().label }}</span>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">
+                        Índice de Anomalia
+                    </p>
+                    <div class="flex items-center gap-2">
+                        <span class="text-3xl sm:text-4xl metric-display text-foreground/40 tabular-nums"
+                            >{{ anomaly() }}</span
+                        >
+                        <span class="tag tag-neutral mt-0.5">ANOMALIA</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div
+        class="flex items-center gap-1 border-b border-border overflow-x-auto overflow-y-hidden"
+        role="tablist"
+        aria-label="Seções da máquina"
+    >
+        @for (t of navItems; track t.id) {
+        <button
+            role="tab"
+            [attr.aria-selected]="activeTab() === t.id"
+            (click)="activeTabChange.emit(t.id)"
+            class="shrink-0 flex items-center gap-2 whitespace-nowrap px-4 py-2.5 -mb-px text-[13px] font-semibold border-b-2 transition-colors"
+            [class.border-foreground]="activeTab() === t.id"
+            [class.text-foreground]="activeTab() === t.id"
+            [class.border-transparent]="activeTab() !== t.id"
+            [class.text-muted-foreground]="activeTab() !== t.id"
+        >
+            {{ t.label }}
+        </button>
+        }
+    </div>
+
+    @defer (when activeTab() === 'digital-twin') { @if (activeTab() === 'digital-twin') {
+    <div class="relative w-full h-[560px] tile overflow-hidden">
+        <app-digital-twin [latheData]="lathe()" [mode]="twinMode()" />
+        <div class="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center border border-border bg-card">
+            <button
+                (click)="twinMode.set('3d')"
+                class="px-4 py-1.5 text-[13px] font-semibold transition-colors duration-150"
+                [class.bg-foreground]="twinMode() === '3d'"
+                [class.text-background]="twinMode() === '3d'"
+                [class.text-muted-foreground]="twinMode() !== '3d'"
+            >
+                3D
+            </button>
+            <button
+                (click)="twinMode.set('camera')"
+                class="px-4 py-1.5 text-[13px] font-semibold transition-colors duration-150 border-l border-border"
+                [class.bg-foreground]="twinMode() === 'camera'"
+                [class.text-background]="twinMode() === 'camera'"
+                [class.text-muted-foreground]="twinMode() !== 'camera'"
+            >
+                Câmera
+            </button>
+        </div>
+    </div>
+    } } @if (activeTab() === 'dashboard') {
+    <app-lathe-dashboard [latheData]="lathe()" [history]="history()" />
+    } @if (activeTab() === 'graphs') {
+    <app-lathe-charts [latheData]="lathe()" [history]="history()" />
+    } @if (activeTab() === 'maintenance') {
+    <div class="space-y-6 max-w-[560px] mx-auto">
+        <div class="tile p-5">
+            <div class="flex flex-col gap-1 mb-5">
+                <h3 class="font-semibold text-[17px]">{{ lathe().name }}</h3>
+                <p class="text-[13px] text-muted-foreground">{{ lathe().model }}</p>
+            </div>
+            <button
+                (click)="openScheduler.emit()"
+                class="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-11 font-medium flex items-center justify-center gap-2 transition-colors"
+            >
+                <app-icon name="calendar" [size]="16" />
+                Agendar Manutenção
+            </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div class="tile p-4">
+                <p class="text-[10px] font-bold text-muted-foreground mb-1 uppercase tracking-widest">Última</p>
+                <p class="text-[15px] font-semibold tabular-nums">{{ lathe().lastMaintenance }}</p>
+            </div>
+            <div class="tile p-4">
+                <p class="text-[10px] font-bold text-muted-foreground mb-1 uppercase tracking-widest">Próxima</p>
+                <p class="text-[15px] font-semibold tabular-nums">{{ lathe().nextMaintenance }}</p>
+            </div>
+            <div class="tile p-4 col-span-2 flex justify-between items-center">
+                <p class="text-[13px] font-medium text-muted-foreground">Horas Trabalhadas</p>
+                <p class="text-[15px] font-semibold tabular-nums">{{ lathe().hoursWorked.toLocaleString('pt-BR') }}h</p>
+            </div>
+        </div>
+
+        @if (scheduledActive().length > 0) {
+        <div>
+            <h3 class="font-semibold text-[13px] mb-3 uppercase tracking-wider text-muted-foreground ml-1">
+                Agendamentos
+            </h3>
+            <div class="space-y-3">
+                @for (m of scheduledActive(); track m.id) {
+                <div class="flex flex-col p-4 bg-card border border-[var(--status-blue)]/20 gap-2">
+                    <div class="flex justify-between items-center">
+                        <span class="font-semibold text-[14px]">{{ typeLabel[m.type] ?? m.type }}</span>
+                        <span class="tag tag-blue">Agendada</span>
+                    </div>
+                    <span class="text-[13px] text-muted-foreground"
+                        >{{ m.date }} às {{ m.time }} • {{ m.technician }}</span
+                    >
+                    @if (m.notes) {
+                    <span class="text-[12px] text-muted-foreground/70 italic">{{ m.notes }}</span>
+                    }
+                    <div class="flex gap-2 mt-1">
+                        <button
+                            type="button"
+                            (click)="updateStatus.emit({ id: m.id, status: 'completed' })"
+                            class="flex-1 h-8 bg-[var(--status-green)]/10 text-[var(--status-green)] text-[12px] font-semibold hover:bg-[var(--status-green)]/15 transition-colors"
+                        >
+                            Concluir
+                        </button>
+                        <app-confirm-button
+                            label="Cancelar"
+                            confirmLabel="Confirmar?"
+                            (confirmed)="updateStatus.emit({ id: m.id, status: 'cancelled' })"
+                        />
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+        } @if (scheduledResolved().length > 0) {
+        <div>
+            <h3 class="font-semibold text-[13px] mb-3 uppercase tracking-wider text-muted-foreground ml-1">
+                Concluídas / Canceladas
+            </h3>
+            <div class="space-y-3">
+                @for (m of scheduledResolved(); track m.id) {
+                <div class="flex flex-col p-4 bg-card border border-border/50 gap-2 opacity-70">
+                    <div class="flex justify-between items-center">
+                        <span class="font-semibold text-[14px]">{{ typeLabel[m.type] ?? m.type }}</span>
+                        <span
+                            class="tag"
+                            [class.tag-green]="m.status === 'completed'"
+                            [class.tag-red]="m.status === 'cancelled'"
+                            >{{ m.status === 'completed' ? 'Concluída' : 'Cancelada' }}</span
+                        >
+                    </div>
+                    <span class="text-[13px] text-muted-foreground"
+                        >{{ m.date }} às {{ m.time }} • {{ m.technician }}</span
+                    >
+                </div>
+                }
+            </div>
+        </div>
+        }
+
+        <div>
+            <h3 class="font-semibold text-[13px] mb-3 uppercase tracking-wider text-muted-foreground ml-1">
+                Histórico
+            </h3>
+            <div class="space-y-3">
+                @for (m of maintenanceHistory(); track $index) {
+                <div class="flex flex-col p-4 bg-card border border-border/50 gap-2">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <app-icon name="check-circle-2" [size]="16" class="text-[var(--status-green)]" />
+                            <span class="font-semibold text-[14px]">{{ m.type }}</span>
+                        </div>
+                        <span class="tag tag-green">{{ m.status }}</span>
+                    </div>
+                    <span class="text-[13px] text-muted-foreground">{{ m.date }} • {{ m.tech }}</span>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+    }
+</div>

@@ -1,6 +1,6 @@
 @if (isOpen()) {
 <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div class="absolute inset-0 modal-overlay-scrim" (click)="close.emit()"></div>
+    <div class="absolute inset-0 modal-overlay-scrim" aria-hidden="true" (click)="close.emit()"></div>
 
     <div
         role="dialog"
@@ -154,7 +154,9 @@
                             [class.border-border]="settings.fontFamily() !== 'default'"
                         >
                             <p class="font-semibold text-[14px] mb-1">Padrão</p>
-                            <p class="text-[12px] text-muted-foreground leading-relaxed">IBM Plex Sans (Design System)</p>
+                            <p class="text-[12px] text-muted-foreground leading-relaxed">
+                                IBM Plex Sans (Design System)
+                            </p>
                         </button>
                         <button
                             (click)="setFontFamily('dyslexia')"

@@ -34,13 +34,6 @@ export const COMMAND_PAGES: CommandPage[] = [
         keywords: ['agendar', 'preventiva', 'corretiva'],
         hint: ':manutenções',
     },
-    {
-        id: 'overview',
-        label: 'Resumo',
-        icon: 'bar-chart-3',
-        keywords: ['estatísticas', 'indicadores'],
-        hint: ':resumo',
-    },
     { id: 'plant', label: 'Planta D', icon: 'factory', keywords: ['mapa', 'setores', 'linhas'], hint: ':planta' },
     {
         id: 'energy',
@@ -57,18 +50,11 @@ export const COMMAND_PAGES: CommandPage[] = [
         hint: ':relatórios',
     },
     {
-        id: 'tips',
-        label: 'Dicas & Boas Práticas',
-        icon: 'lightbulb',
-        keywords: ['ajuda', 'economia', 'como usar'],
-        hint: ':dicas',
-    },
-    {
-        id: 'commands',
-        label: 'Central de Comandos',
-        icon: 'search',
-        keywords: ['atalhos', 'sintaxe', 'ajuda', 'busca'],
-        hint: ':comandos',
+        id: 'compare',
+        label: 'Comparação de Máquinas',
+        icon: 'git-compare-arrows',
+        keywords: ['comparar', 'lado a lado'],
+        hint: ':comparar',
     },
 ];
 
@@ -142,5 +128,12 @@ export const COMMAND_ACTIONS: CommandAction[] = [
         icon: 'file-text',
         keywords: ['alerta', 'crítico'],
         hint: '>relatório alertas',
+    },
+    {
+        id: 'open-help',
+        label: 'Abrir ajuda',
+        icon: 'help',
+        keywords: ['ajuda', 'comandos', 'sintaxe', 'central', 'dúvida'],
+        hint: '>ajuda',
     },
 ];

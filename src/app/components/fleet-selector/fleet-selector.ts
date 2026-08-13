@@ -1,132 +1,105 @@
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import {
-    ChangeDetectionStrategy,
-    Component,
-    HostListener,
-    computed,
-    inject,
-    input,
-    output,
-    signal,
-} from '@angular/core';
-import { LatheData, LatheStatus } from '../../core/models/fleet.model';
+    LatheData,
+    LatheStatus,
+    MaintenanceData,
+    ScheduledMaintenance,
+    TelemetryHistory,
+} from '../../core/models/fleet.model';
 import { STATUS_META } from '../../core/lib/status';
-import { parseDMY } from '../../core/lib/format';
+import { parseDMY, formatISODate, parseISODateLocal, typeLabel } from '../../core/lib/format';
 import { estimateFleetEnergy } from '../../core/lib/energy';
+import { normalizeSearch } from '../../core/lib/text';
+import { maintenanceHistoryFor } from '../../core/data/maintenance-data';
 import { FleetLayoutMode, SettingsService } from '../../core/services/settings.service';
+import { FleetService } from '../../core/services/fleet.service';
+import { ToastService } from '../../core/services/toast.service';
 import { UserSettingsModal } from '../user-settings-modal/user-settings-modal';
+import { MaintenanceScheduler } from '../maintenance-scheduler/maintenance-scheduler';
 import { Icon } from '../../shared/icon/icon';
 import { CommandSearch, CommandSearchSelection } from '../../shared/command-search/command-search';
-import { FleetHomeView, FleetQuickAccessTarget } from './views/fleet-home-view/fleet-home-view';
+import { FleetHomeView } from './views/fleet-home-view/fleet-home-view';
 import { FleetListingView, FilterStatus } from './views/fleet-listing-view/fleet-listing-view';
 import { FleetAlertsView } from './views/fleet-alerts-view/fleet-alerts-view';
 import { FleetMaintenanceView } from './views/fleet-maintenance-view/fleet-maintenance-view';
-import { FleetOverviewView } from './views/fleet-overview-view/fleet-overview-view';
 import { FleetPlantView } from './views/fleet-plant-view/fleet-plant-view';
 import { FleetEnergyView } from './views/fleet-energy-view/fleet-energy-view';
 import { FleetReportsView } from './views/fleet-reports-view/fleet-reports-view';
-import { FleetTipsView } from './views/fleet-tips-view/fleet-tips-view';
-import { FleetCommandsView } from './views/fleet-commands-view/fleet-commands-view';
-import {
-    FleetReportDetailView,
-    ReportKey,
-    REPORT_META,
-} from './views/fleet-report-detail-view/fleet-report-detail-view';
+import { FleetReportDetailView, ReportKey } from './views/fleet-report-detail-view/fleet-report-detail-view';
 import { FleetCostDetailView } from './views/fleet-cost-detail-view/fleet-cost-detail-view';
 import { FleetCompareView } from './views/fleet-compare-view/fleet-compare-view';
+import { FleetMachineDetailView } from './views/fleet-machine-detail-view/fleet-machine-detail-view';
+import { NotificationsBell } from '../notifications-panel/notifications-panel';
 
-type FleetView =
-    | 'home'
-    | 'fleet'
-    | 'alerts'
-    | 'maintenance'
-    | 'overview'
-    | 'plant'
-    | 'energy'
-    | 'reports'
-    | 'tips'
-    | 'commands'
-    | 'report-detail'
-    | 'cost-detail'
-    | 'compare';
+/** Nav principal — máx. 5 itens (Fase 2.2). "Resumo" foi absorvido por "Início"
+ *  (app-fleet-home-view já embute app-fleet-overview-view) e "Energia & Custos"
+ *  virou uma aba dentro de "Relatórios". */
+type FleetView = 'home' | 'fleet' | 'maintenance' | 'reports' | 'compare' | 'report-detail' | 'cost-detail';
+
+/** Alvos de navegação "legados", ainda referenciados por sub-componentes e pela busca interna —
+ *  goTo() os traduz para a view + aba correspondente da nova estrutura unificada (Fase 2.1). */
+type NavTarget = FleetView | 'alerts' | 'plant' | 'overview' | 'energy';
+
+type FleetTab = 'listagem' | 'alertas' | 'planta';
+type ReportsTab = 'relatorios' | 'energia';
 
 /** Página-pai de cada view "de documento" — usado para destaque de nav e breadcrumb. */
 const VIEW_PARENT: Partial<Record<FleetView, FleetView>> = {
     'report-detail': 'reports',
-    'cost-detail': 'energy',
+    'cost-detail': 'reports',
 };
 
-/** Subconjunto curado para a barra inferior mobile (espaço limitado a 5 ícones).
- *  O 6º slot é o botão "Mais" que abre a sheet com NAV_GROUPS completo (Fase F). */
-const MOBILE_NAV_ITEMS: { id: FleetView; label: string; icon: string }[] = [
+/** Nav única — teto de 5 itens (Fase 2.2), sem agrupamento por seção (não sobra conteúdo
+ *  suficiente por grupo depois da fusão da Fase 2.1). Mesma lista serve desktop e mobile. */
+const NAV_ITEMS: { id: FleetView; label: string; icon: string }[] = [
     { id: 'home', label: 'Início', icon: 'home' },
     { id: 'fleet', label: 'Frota', icon: 'layout-grid' },
-    { id: 'alerts', label: 'Alertas', icon: 'alert-triangle' },
     { id: 'maintenance', label: 'Manutenções', icon: 'calendar' },
-    { id: 'energy', label: 'Energia', icon: 'zap' },
+    { id: 'reports', label: 'Relatórios', icon: 'file-text' },
+    { id: 'compare', label: 'Comparar Máquinas', icon: 'git-compare-arrows' },
 ];
 
 const STATUS_ORDER: Record<LatheStatus, number> = { critical: 0, warning: 1, maintenance: 2, operational: 3 };
+
+/** Altura fixa da topbar — usada pra encostar a sidebar embaixo dela, em vez de atrás.
+ *  Corresponde a py-4 (32px) + input h-14 (56px) + borda (1px). */
+const TOPBAR_HEIGHT_PX = 89;
+
+/** Fase 3.1: tamanho de página da listagem — só se aplica aos modos grade/lista
+ *  (o modo agrupado por linha já segmenta naturalmente, sem paginar). */
+const PAGE_SIZE = 12;
+
+const FLEET_TABS: { id: FleetTab; label: string }[] = [
+    { id: 'listagem', label: 'Listagem' },
+    { id: 'alertas', label: 'Alertas' },
+    { id: 'planta', label: 'Planta D' },
+];
+
+const STATUS_FILTERS: FilterStatus[] = ['all', 'operational', 'warning', 'critical', 'maintenance'];
+
+const LAYOUT_MODES: { id: FleetLayoutMode; label: string; icon: string }[] = [
+    { id: 'grouped', label: 'Agrupado por linha', icon: 'layers' },
+    { id: 'grid', label: 'Cards', icon: 'layout-grid' },
+    { id: 'list', label: 'Lista', icon: 'list' },
+];
 
 function sortLathes(lathes: LatheData[]): LatheData[] {
     return [...lathes].sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || a.id.localeCompare(b.id));
 }
 
-/** Nav única, sempre visível — agrupada por tema em vez de escondida atrás de abas. */
-const NAV_GROUPS: { title: string; items: { id: FleetView; label: string; icon: string }[] }[] = [
-    {
-        title: 'Visão Geral',
-        items: [
-            { id: 'home', label: 'Início', icon: 'home' },
-            { id: 'overview', label: 'Resumo', icon: 'bar-chart-3' },
-        ],
-    },
-    {
-        title: 'Frota',
-        items: [
-            { id: 'fleet', label: 'Frota', icon: 'layout-grid' },
-            { id: 'alerts', label: 'Alertas', icon: 'alert-triangle' },
-            { id: 'maintenance', label: 'Manutenções', icon: 'calendar' },
-            { id: 'plant', label: 'Planta D', icon: 'factory' },
-            { id: 'compare', label: 'Comparar Máquinas', icon: 'git-compare-arrows' },
-        ],
-    },
-    {
-        title: 'Análise',
-        items: [
-            { id: 'energy', label: 'Energia & Custos', icon: 'zap' },
-            { id: 'reports', label: 'Relatórios', icon: 'file-text' },
-        ],
-    },
-    {
-        title: 'Ajuda',
-        items: [
-            { id: 'tips', label: 'Dicas & Boas Práticas', icon: 'lightbulb' },
-            { id: 'commands', label: 'Central de Comandos', icon: 'search' },
-        ],
-    },
-];
-
 const VIEW_TITLES: Record<FleetView, string> = {
     home: 'Início',
     fleet: 'Frota',
-    alerts: 'Alertas',
     maintenance: 'Manutenções',
-    overview: 'Resumo',
-    plant: 'Planta D',
-    energy: 'Energia & Custos',
     reports: 'Relatórios',
-    tips: 'Dicas & Boas Práticas',
-    commands: 'Central de Comandos',
     'report-detail': 'Relatório',
     'cost-detail': 'Custo da Máquina',
     compare: 'Comparação de Máquinas',
 };
 
 const VIEW_SUBTITLES: Partial<Record<FleetView, string>> = {
-    energy: 'Estimativa de consumo e custo de energia da frota.',
-    reports: 'Indicadores, processos em andamento e relatórios individuais.',
-    tips: 'Boas práticas para reduzir custos e aproveitar melhor o sistema.',
-    commands: 'Sintaxe da busca interna — páginas, ações e tornos.',
+    reports: 'Indicadores, processos em andamento, energia e relatórios individuais.',
     compare: 'Compare até 4 tornos lado a lado em métricas operacionais.',
 };
 
@@ -147,6 +120,7 @@ function groupBySector(lathes: LatheData[]): [string, LatheData[]][] {
     selector: 'app-fleet-selector',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        FormsModule,
         UserSettingsModal,
         Icon,
         CommandSearch,
@@ -154,15 +128,15 @@ function groupBySector(lathes: LatheData[]): [string, LatheData[]][] {
         FleetListingView,
         FleetAlertsView,
         FleetMaintenanceView,
-        FleetOverviewView,
         FleetPlantView,
         FleetEnergyView,
         FleetReportsView,
-        FleetTipsView,
-        FleetCommandsView,
         FleetReportDetailView,
         FleetCostDetailView,
         FleetCompareView,
+        FleetMachineDetailView,
+        NotificationsBell,
+        MaintenanceScheduler,
     ],
     templateUrl: './fleet-selector.html',
 })
@@ -172,13 +146,61 @@ export class FleetSelector {
 
     readonly select = output<LatheData>();
     readonly logout = output<void>();
+    /** Abre o painel global de Ajuda (renderizado em app.html, fora do escopo desta view). */
+    readonly openHelp = output<void>();
+    /** Fase 3.1: página da listagem sobe para o app-root, que sobrevive à seleção de uma
+     *  máquina — FleetSelector é destruído nesse momento (@if em app.html), então o estado
+     *  não pode viver só aqui se precisa ser preservado ao voltar. */
+    readonly page = input<number>(1);
+    readonly pageChange = output<number>();
+
+    /** Máquina selecionada (estado dono do app-root, sincronizado com a URL /maquina/:id) —
+     *  quando presente, o conteúdo principal vira a subpágina de monitor da máquina. */
+    readonly selectedLathe = input<LatheData | null>(null);
+    readonly latheHistory = input<TelemetryHistory | undefined>(undefined);
+    readonly tick = input<number>(0);
+    readonly machineTab = input<string>('dashboard');
+    readonly machineTabChange = output<string>();
+    readonly deselect = output<void>();
 
     private settings = inject(SettingsService);
+    private toast = inject(ToastService);
+    private fleetService = inject(FleetService);
+
+    /** Id (não o objeto) da máquina selecionada — o objeto `selectedLathe()` muda de referência
+     *  a cada tick de telemetria (o array `fleet` é substituído), mas um `computed` só notifica
+     *  os efeitos quando o VALOR de saída muda de fato, então isso não rerroda o efeito de
+     *  scroll abaixo a cada tick. Ler `selectedLathe()?.id` direto no efeito não teria esse
+     *  filtro — o efeito rerrodaria a cada tick e brigaria com o scroll manual do usuário. */
+    private selectedLatheId = computed(() => this.selectedLathe()?.id ?? null);
+
+    constructor() {
+        // Toda navegação que troca de "página" dentro da Frota deve abrir no topo — sem isso a
+        // posição de scroll da tela anterior vaza para o novo conteúdo.
+        effect(() => {
+            this.fleetView();
+            this.fleetTab();
+            this.reportsTab();
+            this.machineTab();
+            this.selectedLatheId();
+            // O scroll real da página acontece no documento (html/body), não em #scrollRoot —
+            // ver comentário na topbar fixa sobre esse mesmo detalhe.
+            window.scrollTo({ top: 0 });
+        });
+    }
 
     protected fleetView = signal<FleetView>('home');
+    protected fleetTab = signal<FleetTab>('listagem');
+    protected fleetTabs = FLEET_TABS;
+    protected statusFilters = STATUS_FILTERS;
+    protected layoutModes = LAYOUT_MODES;
+    protected reportsTab = signal<ReportsTab>('relatorios');
     protected search = signal('');
     protected filter = signal<FilterStatus>('all');
     protected isSettingsOpen = signal(false);
+    /** Popover de perfil na topbar de Relatórios (Configurações/Sair) — substitui os ícones que
+     *  saíram do rodapé da sidebar nesse layout. */
+    protected isProfileMenuOpen = signal(false);
     protected isSidebarCollapsed = signal(false);
     protected collapsedSectors = signal<Set<string>>(new Set());
     protected layoutMode = this.settings.fleetLayoutMode;
@@ -186,22 +208,25 @@ export class FleetSelector {
     protected selectedReportKey = signal<ReportKey | null>(null);
     protected selectedCostMachineId = signal<string | null>(null);
 
-    /** Fase F: controla a abertura da sheet "Mais" no nav inferior mobile. */
-    protected isMobileMoreOpen = signal(false);
+    /** Topbar fixa (logo + busca central + notificações/perfil) — layout inspirado na
+     *  Descomplica, agora padrão em todo o app (não mais exclusivo de Relatórios). */
+    protected topbarHeightPx = TOPBAR_HEIGHT_PX;
 
-    protected navGroups = NAV_GROUPS;
-    protected mobileNavItems = MOBILE_NAV_ITEMS;
+    protected navItems = NAV_ITEMS;
     protected viewTitles = VIEW_TITLES;
     protected viewSubtitles = VIEW_SUBTITLES;
     protected STATUS_META = STATUS_META;
     protected statusOrder: LatheStatus[] = ['critical', 'warning', 'maintenance', 'operational'];
 
     protected filtered = computed(() => {
-        const s = this.search().toLowerCase();
+        const s = normalizeSearch(this.search());
         const f = this.filter();
         return this.lathes().filter((l) => {
             const matchSearch =
-                l.name.toLowerCase().includes(s) || l.id.toLowerCase().includes(s) || l.model.toLowerCase().includes(s);
+                normalizeSearch(l.name).includes(s) ||
+                normalizeSearch(l.id).includes(s) ||
+                normalizeSearch(l.model).includes(s) ||
+                normalizeSearch(l.sector).includes(s);
             const matchFilter = f === 'all' || l.status === f;
             return matchSearch && matchFilter;
         });
@@ -210,48 +235,104 @@ export class FleetSelector {
     protected grouped = computed(() => groupBySector(this.filtered()));
     protected flatSorted = computed(() => sortLathes(this.filtered()));
     protected isFiltering = computed(() => this.search().trim() !== '' || this.filter() !== 'all');
+    protected isSearching = computed(() => this.search().trim() !== '');
 
-    /** Planta D — mapa esquemático por setor (não depende de busca/filtro da Frota). */
-    protected plantSectors = computed(() => groupBySector(this.lathes()));
+    /** Fase 2.1 (redesenho): a busca compartilhada da Frota também filtra Alertas e Planta D —
+     *  antes cada aba era um mini-app isolado sem contexto compartilhado com as outras. */
+    protected urgentAlertsFiltered = computed(() => {
+        const s = normalizeSearch(this.search());
+        if (!s) return this.urgentAlerts();
+        return this.urgentAlerts().filter(
+            (l) =>
+                normalizeSearch(l.name).includes(s) ||
+                normalizeSearch(l.id).includes(s) ||
+                normalizeSearch(l.model).includes(s) ||
+                normalizeSearch(l.sector).includes(s),
+        );
+    });
+
+    protected sectorCount = computed(() => new Set(this.lathes().map((l) => l.sector)).size);
+
+    protected showFleetTab(tab: FleetTab): void {
+        this.fleetTab.set(tab);
+    }
+
+    /** Fase 3.1: paginação (12/página) — só usada nos modos grade/lista de fleet-listing-view. */
+    protected totalPages = computed(() => Math.max(1, Math.ceil(this.filtered().length / PAGE_SIZE)));
+    protected currentPage = computed(() => Math.min(Math.max(1, this.page()), this.totalPages()));
+    protected paginatedFlatSorted = computed(() => {
+        const all = this.flatSorted();
+        const start = (this.currentPage() - 1) * PAGE_SIZE;
+        return all.slice(start, start + PAGE_SIZE);
+    });
+
+    /** Planta D — mapa esquemático por setor. Fase 2.1 (redesenho): agora respeita a mesma busca
+     *  compartilhada da Frota, em vez de ignorá-la como um mini-app isolado. */
+    protected plantSectors = computed(() => groupBySector(this.filtered()));
 
     protected setLayoutMode(mode: FleetLayoutMode): void {
         this.settings.setFleetLayoutMode(mode);
     }
 
-    /** Roteador único de navegação interna — usado pela sidebar, atalhos, busca e "voltar". */
-    protected goTo(view: FleetView | FleetQuickAccessTarget): void {
-        this.fleetView.set(view as FleetView);
-        // Fechar sheet "Mais" ao navegar
-        this.isMobileMoreOpen.set(false);
+    protected onSearchChange(value: string): void {
+        this.search.set(value);
+        this.pageChange.emit(1);
+    }
+
+    protected onFilterChange(value: FilterStatus): void {
+        this.filter.set(value);
+        this.pageChange.emit(1);
+    }
+
+    protected onPageChange(page: number): void {
+        this.pageChange.emit(page);
+        // O scroll real da página acontece no documento (html/body), não em #scrollRoot — ver
+        // comentário na topbar fixa sobre esse mesmo detalhe.
+        window.scrollTo({ top: 0 });
+    }
+
+    protected clearListingFilters(): void {
+        this.onSearchChange('');
+        this.onFilterChange('all');
+    }
+
+    /** Roteador único de navegação interna — usado pela sidebar, atalhos, busca e "voltar".
+     *  Alvos legados ("alerts"/"plant"/"energy"/"overview") são traduzidos para a view + aba
+     *  correspondente da estrutura unificada da Fase 2.1, preservando os destinos que os
+     *  sub-componentes (home, reports, busca interna) já emitem. */
+    protected goTo(target: NavTarget): void {
+        switch (target) {
+            case 'alerts':
+                this.fleetTab.set('alertas');
+                this.fleetView.set('fleet');
+                break;
+            case 'plant':
+                this.fleetTab.set('planta');
+                this.fleetView.set('fleet');
+                break;
+            case 'overview':
+                this.fleetView.set('home');
+                break;
+            case 'energy':
+                this.reportsTab.set('energia');
+                this.fleetView.set('reports');
+                break;
+            case 'fleet':
+                this.fleetTab.set('listagem');
+                this.fleetView.set('fleet');
+                break;
+            case 'reports':
+                this.reportsTab.set('relatorios');
+                this.fleetView.set('reports');
+                break;
+            default:
+                this.fleetView.set(target);
+        }
     }
 
     /** Item de nav que deve aparecer ativo — páginas de documento contam como parte de
-     *  Relatórios/Energia (seu grupo pai) para fins de destaque visual. */
+     *  Relatórios (seu grupo pai) para fins de destaque visual. */
     protected activeNavId = computed<FleetView>(() => VIEW_PARENT[this.fleetView()] ?? this.fleetView());
-
-    /** Trilha de navegação exibida no topo de toda página, sempre visível. */
-    protected breadcrumb = computed<{ label: string; view: FleetView | null }[]>(() => {
-        const v = this.fleetView();
-        if (v === 'home') return [{ label: 'Início', view: null }];
-
-        const crumbs: { label: string; view: FleetView | null }[] = [{ label: 'Início', view: 'home' }];
-        const parent = VIEW_PARENT[v];
-        if (parent) {
-            crumbs.push({ label: VIEW_TITLES[parent], view: parent });
-            const reportKey = this.selectedReportKey();
-            const costMachine = this.selectedCostMachine();
-            const leaf =
-                v === 'report-detail' && reportKey
-                    ? REPORT_META[reportKey].title
-                    : v === 'cost-detail' && costMachine
-                      ? costMachine.name
-                      : VIEW_TITLES[v];
-            crumbs.push({ label: leaf, view: null });
-        } else {
-            crumbs.push({ label: VIEW_TITLES[v], view: null });
-        }
-        return crumbs;
-    });
 
     protected openReportDetail(key: ReportKey): void {
         this.selectedReportKey.set(key);
@@ -271,7 +352,7 @@ export class FleetSelector {
     /** Trata a seleção vinda da busca interna (app-command-search): página, ação ou torno. */
     protected onCommandSelect(selection: CommandSearchSelection): void {
         if (selection.kind === 'page') {
-            this.goTo(selection.target as FleetView);
+            this.goTo(selection.target as NavTarget);
         } else if (selection.kind === 'machine') {
             const lathe = this.lathes().find((l) => l.id === selection.latheId);
             if (lathe) this.select.emit(lathe);
@@ -315,6 +396,9 @@ export class FleetSelector {
                 break;
             case 'report-alerts':
                 this.openReportDetail('alerts');
+                break;
+            case 'open-help':
+                this.openHelp.emit();
                 break;
         }
     }
@@ -381,9 +465,65 @@ export class FleetSelector {
         this.collapsedSectors.set(this.allCollapsed() ? new Set() : new Set(this.grouped().map(([s]) => s)));
     }
 
-    /** Fase F: fecha a sheet "Mais" ao pressionar ESC (mesmo padrão do maintenance-scheduler). */
-    @HostListener('document:keydown.escape')
-    onEsc(): void {
-        if (this.isMobileMoreOpen()) this.isMobileMoreOpen.set(false);
+    // --- Subpágina de detalhe de máquina (Fase F) -------------------------------------------
+    // Vive aqui, não no componente de detalhe: ele é recriado a cada seleção/deseleção, mas os
+    // agendamentos de manutenção precisam sobreviver enquanto o usuário navega pela Frota.
+
+    protected isSchedulerOpen = signal(false);
+    protected scheduledMaintenances = signal<ScheduledMaintenance[]>([]);
+    protected typeLabel = typeLabel;
+
+    protected latheMaintenance = computed(() => {
+        const id = this.selectedLathe()?.id;
+        return this.scheduledMaintenances().filter((m) => m.machineId === id && m.status === 'scheduled');
+    });
+
+    protected latheMaintenanceResolved = computed(() => {
+        const id = this.selectedLathe()?.id;
+        return this.scheduledMaintenances().filter((m) => m.machineId === id && m.status !== 'scheduled');
+    });
+
+    protected maintenanceHistoryForSelected = computed(() =>
+        this.selectedLathe() ? maintenanceHistoryFor(this.selectedLathe()!) : [],
+    );
+
+    protected onScheduleSubmit(data: MaintenanceData): void {
+        const entry: ScheduledMaintenance = {
+            ...data,
+            id: `mnt-${Date.now()}`,
+            scheduledAt: new Date().toISOString(),
+            status: 'scheduled',
+        };
+        const updated = [...this.scheduledMaintenances(), entry];
+        this.scheduledMaintenances.set(updated);
+
+        const latheDates = updated.filter((m) => m.machineId === data.machineId).map((m) => m.date);
+        const nearest = this.nearestUpcomingDate(latheDates);
+        if (nearest) {
+            this.fleetService.fleet.update((f) =>
+                f.map((l) => (l.id === data.machineId ? { ...l, nextMaintenance: nearest } : l)),
+            );
+        }
+
+        const lathe = this.selectedLathe();
+        this.toast.success(
+            'Manutenção agendada!',
+            `${lathe?.name} · ${formatISODate(data.date)} às ${data.time} · ${typeLabel[data.type] ?? data.type}`,
+        );
+    }
+
+    protected updateMaintenanceStatus(id: string, status: 'completed' | 'cancelled'): void {
+        this.scheduledMaintenances.update((list) => list.map((m) => (m.id === id ? { ...m, status } : m)));
+        this.toast.info(status === 'completed' ? 'Manutenção concluída' : 'Manutenção cancelada');
+    }
+
+    private nearestUpcomingDate(dates: string[]): string | null {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const future = dates
+            .map((d) => ({ raw: d, parsed: parseISODateLocal(d) }))
+            .filter((x) => x.parsed && x.parsed >= today)
+            .sort((a, b) => a.parsed!.getTime() - b.parsed!.getTime());
+        return future.length > 0 ? formatISODate(future[0].raw) : null;
     }
 }

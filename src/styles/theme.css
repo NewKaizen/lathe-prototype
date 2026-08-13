@@ -24,359 +24,515 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  --font-size: 16px;
+    --font-size: 16px;
 
-  /* Fundo/texto base — White theme do Carbon */
-  --background: #ffffff;
-  --foreground: #161616;
+    /* Fundo/texto base — White theme do Carbon */
+    --background: #ffffff;
+    --foreground: #161616;
 
-  /* Card = Layer 01 ($layer-01, Gray 10) — camada acima do fundo branco */
-  --card: #f4f4f4;
-  --card-foreground: #161616;
+    /* Card = Layer 01 ($layer-01, Gray 10) — camada acima do fundo branco */
+    --card: #f4f4f4;
+    --card-foreground: #161616;
 
-  --popover: #ffffff;
-  --popover-foreground: #161616;
+    --popover: #ffffff;
+    --popover-foreground: #161616;
 
-  /* Primary: Blue 60 — único acento interativo/de marca do sistema */
-  --primary: #0f62fe;
-  --primary-foreground: #ffffff;
+    /* Primary: Blue 60 — único acento interativo/de marca do sistema */
+    --primary: #0f62fe;
+    --primary-foreground: #ffffff;
 
-  --secondary: #e0e0e0;
-  --secondary-foreground: #161616;
+    --secondary: #e0e0e0;
+    --secondary-foreground: #161616;
 
-  --muted: #f4f4f4;
-  --muted-foreground: #525252;
+    --muted: #f4f4f4;
+    --muted-foreground: #525252;
 
-  --accent: #0f62fe;
-  --accent-foreground: #ffffff;
+    --accent: #0f62fe;
+    --accent-foreground: #ffffff;
 
-  --destructive: #da1e28;
-  --destructive-foreground: #ffffff;
+    --destructive: #da1e28;
+    --destructive-foreground: #ffffff;
 
-  /* $border-subtle-00 — sempre sólida, nunca rgba decorativa */
-  --border: #e0e0e0;
-  --input: transparent;
-  --input-background: #f4f4f4;
-  --switch-background: #8d8d8d;
+    /* $border-subtle-00 — sempre sólida, nunca rgba decorativa */
+    --border: #e0e0e0;
+    --input: transparent;
+    --input-background: #f4f4f4;
+    --switch-background: #8d8d8d;
 
-  --font-weight-medium: 500;
-  --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-normal: 400;
 
-  /* $focus — anel de foco/seleção */
-  --ring: #0f62fe;
+    /* $focus — anel de foco/seleção */
+    --ring: #0f62fe;
 
-  /* Chart colors — subconjunto do palette de suporte Carbon */
-  --chart-1: #0f62fe;
-  --chart-2: #da1e28;
-  --chart-3: #24a148;
-  --chart-4: #8a3ffc;
-  --chart-5: #ff832b;
+    /* Chart colors — subconjunto do palette de suporte Carbon */
+    --chart-1: #0f62fe;
+    --chart-2: #da1e28;
+    --chart-3: #24a148;
+    --chart-4: #8a3ffc;
+    --chart-5: #ff832b;
 
-  /* Cantos retos por padrão (Carbon); pill só para exceções explícitas */
-  --radius: 0px;
-  --radius-pill: 9999px;
+    /* Cantos retos por padrão (Carbon); pill só para exceções explícitas */
+    --radius: 0px;
+    --radius-pill: 9999px;
 
-  /* Sidebar / side-nav */
-  --sidebar: #f4f4f4;
-  --sidebar-foreground: #161616;
-  --sidebar-primary: #161616;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e0e0e0;
-  --sidebar-accent-foreground: #161616;
-  --sidebar-border: #c6c6c6;
-  --sidebar-ring: #0f62fe;
+    /* Sidebar / side-nav */
+    --sidebar: #f4f4f4;
+    --sidebar-foreground: #161616;
+    --sidebar-primary: #161616;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #e0e0e0;
+    --sidebar-accent-foreground: #161616;
+    --sidebar-border: #c6c6c6;
+    --sidebar-ring: #0f62fe;
 
-  /* Status Colors — tokens $support-* oficiais do Carbon */
-  --status-green: #24a148;
-  --status-yellow: #f1c21b;
-  --status-red: #da1e28;
-  --status-blue: #0f62fe;
-  /* Manutenção usa roxo, não azul: o azul é reservado para "isso é clicável"
+    /* Status Colors — tokens $support-* oficiais do Carbon */
+    --status-green: #24a148;
+    --status-yellow: #f1c21b;
+    --status-red: #da1e28;
+    --status-blue: #0f62fe;
+    /* Manutenção usa roxo, não azul: o azul é reservado para "isso é clicável"
      (links/ações/foco); reaproveitá-lo num status criaria ambiguidade. */
-  --status-purple: #8a3ffc;
+    --status-purple: #8a3ffc;
 
-  /* Camadas adicionais Carbon (fora do vocabulário shadcn herdado) */
-  --layer-01: #f4f4f4;
-  --layer-02: #ffffff;
-  --layer-03: #f4f4f4;
-  --border-subtle: #e0e0e0;
-  --border-strong: #8d8d8d;
-  --text-secondary: #525252;
-  --text-helper: #6f6f6f;
-  --support-error: #da1e28;
-  --support-success: #24a148;
-  --support-warning: #f1c21b;
-  --support-info: #0043ce;
-  --focus: #0f62fe;
-  --overlay: rgba(0, 0, 0, 0.6);
+    /* Camadas adicionais Carbon (fora do vocabulário shadcn herdado) */
+    --layer-01: #f4f4f4;
+    --layer-02: #ffffff;
+    --layer-03: #f4f4f4;
+    --border-subtle: #e0e0e0;
+    --border-strong: #8d8d8d;
+    --text-secondary: #525252;
+    --text-helper: #6f6f6f;
+    --support-error: #da1e28;
+    --support-success: #24a148;
+    --support-warning: #f1c21b;
+    --support-info: #0043ce;
+    --focus: #0f62fe;
+    --overlay: rgba(0, 0, 0, 0.6);
 
-  /* Sem elevação por sombra — mantido só por compatibilidade de nome; valor "none". */
-  --elevation-1: none;
-  --elevation-2: none;
-  --elevation-3: none;
+    /* Sem elevação por sombra — mantido só por compatibilidade de nome; valor "none". */
+    --elevation-1: none;
+    --elevation-2: none;
+    --elevation-3: none;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-input-background: var(--input-background);
-  --color-switch-background: var(--switch-background);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-input-background: var(--input-background);
+    --color-switch-background: var(--switch-background);
+    --color-ring: var(--ring);
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
 
-  --color-status-green: var(--status-green);
-  --color-status-yellow: var(--status-yellow);
-  --color-status-red: var(--status-red);
-  --color-status-blue: var(--status-blue);
-  --color-status-purple: var(--status-purple);
+    --color-status-green: var(--status-green);
+    --color-status-yellow: var(--status-yellow);
+    --color-status-red: var(--status-red);
+    --color-status-blue: var(--status-blue);
+    --color-status-purple: var(--status-purple);
 
-  --radius-sm: var(--radius);
-  --radius-md: var(--radius);
-  --radius-lg: var(--radius);
-  --radius-xl: var(--radius);
+    --radius-sm: var(--radius);
+    --radius-md: var(--radius);
+    --radius-lg: var(--radius);
+    --radius-xl: var(--radius);
 
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-sans: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
-  --font-display: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
-  --font-mono: 'IBM Plex Mono', 'Menlo', 'DejaVu Sans Mono', monospace;
+    --font-sans: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+    --font-display: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'Menlo', 'DejaVu Sans Mono', monospace;
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-    font-family: var(--font-sans);
-  }
+    * {
+        @apply border-border outline-ring/50;
+        font-family: var(--font-sans);
+    }
 
-  body {
-    @apply text-foreground bg-background;
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+    body {
+        @apply text-foreground bg-background;
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
 
-  html {
-    font-size: var(--font-size);
-  }
+    html {
+        font-size: var(--font-size);
+    }
 
-  /* Hierarquia productive Carbon: pesos 300/400/600, nunca 700 em texto de UI;
+    /* A rolagem real acontece no documento (body cresce com min-height: 100vh);
+     os containers internos com .custom-scrollbar/.scrollbar-hide nunca tinham
+     overflow próprio de verdade. Some com a barra nativa aqui, no nível certo. */
+    html,
+    body {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Hierarquia productive Carbon: pesos 300/400/600, nunca 700 em texto de UI;
      letter-spacing neutro (a IBM não usa tracking negativo agressivo). */
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display);
-    letter-spacing: 0;
-  }
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family: var(--font-display);
+        letter-spacing: 0;
+    }
 
-  h1 { font-size: 32px; font-weight: 300; line-height: 1.25; }
-  h2 { font-size: 28px; font-weight: 300; line-height: 1.29; }
-  h3 { font-size: 20px; font-weight: 400; line-height: 1.4;  }
-  h4 { font-size: 18px; font-weight: 400; line-height: 1.4;  }
-  label  { font-size: 12px; font-weight: 400; line-height: 1.34; }
-  button { font-size: 14px; font-weight: 400; line-height: 1.29; }
-  input  { font-size: 14px; font-weight: 400; line-height: 1.29; }
+    h1 {
+        font-size: 32px;
+        font-weight: 300;
+        line-height: 1.25;
+    }
+    h2 {
+        font-size: 28px;
+        font-weight: 300;
+        line-height: 1.29;
+    }
+    h3 {
+        font-size: 20px;
+        font-weight: 400;
+        line-height: 1.4;
+    }
+    h4 {
+        font-size: 18px;
+        font-weight: 400;
+        line-height: 1.4;
+    }
+    label {
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 1.34;
+    }
+    button {
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.29;
+    }
+    input {
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.29;
+    }
 }
 
 @layer utilities {
-
-  /* ─── Escala tipográfica nomeada (productive type set do Carbon) ──────────
+    /* ─── Escala tipográfica nomeada (productive type set do Carbon) ──────────
      Uma classe por papel de texto. Preferir estas sobre text-[Npx] arbitrários. */
-  .text-overline { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.32px; line-height: 1.34; }
-  .text-caption  { font-size: 12px; line-height: 1.34; }
-  .text-body-sm  { font-size: 12px; line-height: 1.34; }
-  .text-body     { font-size: 14px; line-height: 1.43; }
-  .text-body-lg  { font-size: 14px; line-height: 1.43; }
-  .text-title-sm { font-size: 16px; font-weight: 600; line-height: 1.375; }
-  .text-title    { font-size: 20px; font-weight: 400; line-height: 1.4; }
-  .text-heading  { font-size: 28px; font-weight: 300; line-height: 1.29; }
+    .text-overline {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.32px;
+        line-height: 1.34;
+    }
+    .text-caption {
+        font-size: 12px;
+        line-height: 1.34;
+    }
+    .text-body-sm {
+        font-size: 12px;
+        line-height: 1.34;
+    }
+    .text-body {
+        font-size: 14px;
+        line-height: 1.43;
+    }
+    .text-body-lg {
+        font-size: 14px;
+        line-height: 1.43;
+    }
+    .text-title-sm {
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.375;
+    }
+    .text-title {
+        font-size: 20px;
+        font-weight: 400;
+        line-height: 1.4;
+    }
+    .text-heading {
+        font-size: 28px;
+        font-weight: 300;
+        line-height: 1.29;
+    }
 
-  /* ─── Tags (badge de status) — padrão Carbon: pill pastel + texto saturado.
+    /* ─── Tags (badge de status) — padrão Carbon: pill pastel + texto saturado.
      Consumidas por lib/status.ts (STATUS_META) e pelas views de frota.
      Nomes antigos (.badge-pill/.badge-*) mantidos como alias no MESMO seletor
      (não via @apply — classes custom não são utilities reconhecidas pelo
      Tailwind v4 para fins de @apply). ─────────────────────────────────────── */
-  .tag, .badge-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    border-radius: var(--radius-pill);
-    padding: 0.15rem 0.65rem;
-    font-size: 12px;
-    font-weight: 600;
-    white-space: nowrap;
-    width: fit-content;
-  }
-  .tag-green, .badge-green     { background: color-mix(in srgb, var(--status-green) 16%, white);  color: color-mix(in srgb, var(--status-green) 70%, black); }
-  .tag-yellow, .badge-yellow   { background: color-mix(in srgb, var(--status-yellow) 30%, white); color: #4d3800; }
-  .tag-red, .badge-red         { background: color-mix(in srgb, var(--status-red) 16%, white);    color: color-mix(in srgb, var(--status-red) 70%, black); }
-  .tag-blue, .badge-blue, .badge-accent { background: color-mix(in srgb, var(--status-blue) 16%, white);   color: color-mix(in srgb, var(--status-blue) 70%, black); }
-  .tag-purple                  { background: color-mix(in srgb, var(--status-purple) 16%, white); color: color-mix(in srgb, var(--status-purple) 70%, black); }
-  .tag-neutral, .badge-neutral { background: var(--secondary); color: var(--text-secondary); }
+    .tag,
+    .badge-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        border-radius: var(--radius-pill);
+        padding: 0.15rem 0.65rem;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+        width: fit-content;
+    }
+    .tag-green,
+    .badge-green {
+        background: color-mix(in srgb, var(--status-green) 16%, white);
+        color: color-mix(in srgb, var(--status-green) 70%, black);
+    }
+    .tag-yellow,
+    .badge-yellow {
+        background: color-mix(in srgb, var(--status-yellow) 30%, white);
+        color: #4d3800;
+    }
+    .tag-red,
+    .badge-red {
+        background: color-mix(in srgb, var(--status-red) 16%, white);
+        color: color-mix(in srgb, var(--status-red) 70%, black);
+    }
+    .tag-blue,
+    .badge-blue,
+    .badge-accent {
+        background: color-mix(in srgb, var(--status-blue) 16%, white);
+        color: color-mix(in srgb, var(--status-blue) 70%, black);
+    }
+    .tag-purple {
+        background: color-mix(in srgb, var(--status-purple) 16%, white);
+        color: color-mix(in srgb, var(--status-purple) 70%, black);
+    }
+    .tag-neutral,
+    .badge-neutral {
+        background: var(--secondary);
+        color: var(--text-secondary);
+    }
 
-  /* ─── Tile — container plano Carbon: cor de camada sólida, borda de 1px,
+    /* ─── Tile — container plano Carbon: cor de camada sólida, borda de 1px,
      cantos retos, ZERO sombra/blur. Substitui .cupertino-card/.soft-card/.card-xl
      (mantidos como alias no mesmo seletor). ────────────────────────────────── */
-  .tile, .cupertino-card, .soft-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-  }
-  .tile-interactive, .soft-card {
-    transition: background-color 0.11s ease;
-  }
-  .tile-interactive:hover, .soft-card:hover {
-    background: var(--secondary);
-  }
-  .card-xl { border-radius: var(--radius); overflow: hidden; }
+    .tile,
+    .cupertino-card,
+    .soft-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+    }
+    .tile-interactive,
+    .soft-card {
+        transition: background-color 0.11s ease;
+    }
+    .tile-interactive:hover,
+    .soft-card:hover {
+        background: var(--secondary);
+    }
+    .card-xl {
+        border-radius: var(--radius);
+        overflow: hidden;
+    }
 
-  /* ─── Overlay sólido de modal (Carbon $overlay) — sem blur.
+    /* ─── Overlay sólido de modal (Carbon $overlay) — sem blur.
      "glass" deixa de ter blur, vira tile sólido (alias mantido). ──────────── */
-  .modal-overlay, .glass {
-    background: var(--card);
-    border: 1px solid var(--border);
-  }
-  /* Scrim de fundo por trás de modais — preto sólido semitransparente, sem blur. */
-  .modal-overlay-scrim {
-    background: var(--overlay);
-  }
+    .modal-overlay,
+    .glass {
+        background: var(--card);
+        border: 1px solid var(--border);
+    }
+    /* Scrim de fundo por trás de modais — preto sólido semitransparente, sem blur. */
+    .modal-overlay-scrim {
+        background: var(--overlay);
+    }
 
-  /* ─── Números métricos (Plex Mono, hierarquia por tamanho, não por peso) ── */
-  .metric-display {
-    font-family: var(--font-mono);
-    font-weight: 300;
-    letter-spacing: 0;
-  }
+    /* ─── Números métricos (Plex Mono, hierarquia por tamanho, não por peso) ── */
+    .metric-display {
+        font-family: var(--font-mono);
+        font-weight: 300;
+        letter-spacing: 0;
+    }
 
-  /* ─── Animations ─────────────────────────────────────────────── */
-  @keyframes fade-in {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
-  .animate-fade-in {
-    animation: fade-in 0.15s ease;
-  }
+    /* ─── Animations ─────────────────────────────────────────────── */
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+    .animate-fade-in {
+        animation: fade-in 0.15s ease;
+    }
 
-  /* ─── Scrollbar ──────────────────────────────────────────────── */
-  .custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: var(--muted-foreground) transparent;
-  }
-  .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
-  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--muted-foreground);
-    border-radius: 4px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--foreground);
-  }
+    /* ─── Scrollbar ──────────────────────────────────────────────── */
+    .custom-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: var(--muted-foreground) transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: var(--muted-foreground);
+        border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: var(--foreground);
+    }
 
-  /* ─── Hide scrollbar (sidebar nav) ───────────────────────────── */
-  .scrollbar-hide::-webkit-scrollbar { display: none; }
-  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    /* ─── Hide scrollbar (sidebar nav) ───────────────────────────── */
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
 
-  /* ─── Side nav link — item de navegação Carbon: retângulo, barra de
+    /* ─── Side nav link — item de navegação Carbon: retângulo, barra de
      acento azul de 3px à esquerda quando ativo, sem pill/sombra
      (.nav-pill/.nav-pill-active mantidos como alias). ─────────────────────── */
-  .side-nav-link, .nav-pill {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: 0.85rem 1rem;
-    border-left: 3px solid transparent;
-    background: transparent;
-    color: var(--text-secondary);
-    transition: background-color 0.11s ease, color 0.11s ease;
-  }
-  .side-nav-link:hover, .nav-pill:hover {
-    background: var(--secondary);
-    color: var(--foreground);
-  }
-  .side-nav-link-active, .nav-pill-active {
-    background: var(--secondary);
-    color: var(--foreground);
-    border-left-color: var(--primary);
-    font-weight: 600;
-  }
-
-  /* ─── Animations (mantidas, sem exagero de easing) ──────────────────────── */
-  @keyframes fade-in-up {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes shake {
-    10%, 90% { transform: translateX(-1px); }
-    20%, 80% { transform: translateX(2px); }
-    30%, 50%, 70% { transform: translateX(-4px); }
-    40%, 60% { transform: translateX(4px); }
-  }
-  .animate-fade-in-up { animation: fade-in-up 0.2s ease forwards; }
-  .animate-shake      { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
-
-  /* ─── Campo de formulário único (Login, FleetManager, Scheduler…) ───────
-     Padrão Carbon: cantos retos, fundo de campo, borda inferior forte. ──── */
-  .input-field {
-    width: 100%;
-    height: 2.75rem;
-    padding: 0 1rem;
-    border-radius: var(--radius);
-    background: var(--input-background);
-    border: 1px solid var(--border);
-    border-bottom: 2px solid var(--border-strong);
-    font-size: 14px;
-    color: var(--foreground);
-    transition: background-color 0.11s ease, border-color 0.11s ease;
-  }
-  .input-field::placeholder {
-    color: var(--text-helper);
-  }
-  .input-field:focus {
-    outline: 2px solid var(--focus);
-    outline-offset: -2px;
-  }
-  .input-field-error {
-    border-bottom-color: var(--support-error);
-  }
-
-  /* ─── Acessibilidade: respeitar prefers-reduced-motion ─────────── */
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
+    .side-nav-link,
+    .nav-pill {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: 0.85rem 1rem;
+        border-left: 3px solid transparent;
+        background: transparent;
+        color: var(--text-secondary);
+        transition:
+            background-color 0.11s ease,
+            color 0.11s ease;
     }
-  }
+    .side-nav-link:hover,
+    .nav-pill:hover {
+        background: var(--secondary);
+        color: var(--foreground);
+    }
+    .side-nav-link-active,
+    .nav-pill-active {
+        background: var(--secondary);
+        color: var(--foreground);
+        border-left-color: var(--primary);
+        font-weight: 600;
+    }
 
-  /* ─── Acessibilidade: preferência manual (Configurações > Acessibilidade) ─── */
-  .reduce-motion *, .reduce-motion *::before, .reduce-motion *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+    /* ─── Animations (mantidas, sem exagero de easing) ──────────────────────── */
+    @keyframes fade-in-up {
+        from {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    @keyframes shake {
+        10%,
+        90% {
+            transform: translateX(-1px);
+        }
+        20%,
+        80% {
+            transform: translateX(2px);
+        }
+        30%,
+        50%,
+        70% {
+            transform: translateX(-4px);
+        }
+        40%,
+        60% {
+            transform: translateX(4px);
+        }
+    }
+    .animate-fade-in-up {
+        animation: fade-in-up 0.2s ease forwards;
+    }
+    .animate-shake {
+        animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+    }
+
+    /* ─── Campo de formulário único (Login, FleetManager, Scheduler…) ───────
+     Padrão Carbon: cantos retos, fundo de campo, borda inferior forte. ──── */
+    .input-field {
+        width: 100%;
+        height: 2.75rem;
+        padding: 0 1rem;
+        border-radius: var(--radius);
+        background: var(--input-background);
+        border: 1px solid var(--border);
+        border-bottom: 2px solid var(--border-strong);
+        font-size: 14px;
+        color: var(--foreground);
+        transition:
+            background-color 0.11s ease,
+            border-color 0.11s ease;
+    }
+    .input-field::placeholder {
+        color: var(--text-helper);
+    }
+    .input-field:focus {
+        outline: 2px solid var(--focus);
+        outline-offset: -2px;
+    }
+    .input-field-error {
+        border-bottom-color: var(--support-error);
+    }
+
+    /* ─── Acessibilidade: respeitar prefers-reduced-motion ─────────── */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+
+    /* ─── Acessibilidade: preferência manual (Configurações > Acessibilidade) ─── */
+    .reduce-motion *,
+    .reduce-motion *::before,
+    .reduce-motion *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }
