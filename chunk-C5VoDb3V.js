@@ -1,4 +1,0 @@
-import {s as s$1,a3 as t,B as r$1,a4 as a,C as t$1}from'./chunk-CcDaKoGx.js';import'./main-DHVCN5OT.js';var r="volumetricLightingRenderVolumeVertexShader",c=`#include<__decl__sceneVertex>
-#include<__decl__meshVertex>
-attribute vec3 position;varying vec4 vWorldPos;void main(void) {vec4 worldPos=world*vec4(position,1.0);vWorldPos=worldPos;gl_Position=viewProjection*worldPos;}
-`;s$1.ShadersStore[r]||(s$1.ShadersStore[r]=c);var d=[t,r$1,a,t$1];for(let o of d)s$1.IncludesShadersStore[o.name]||(s$1.IncludesShadersStore[o.name]=o.shader);var S={name:r,shader:c};export{S as volumetricLightingRenderVolumeVertexShader};
