@@ -102,13 +102,15 @@
         class="fixed top-0 left-0 right-0 z-40 flex items-center border-b border-border bg-card px-6"
         [style.height.px]="topbarHeightPx"
     >
-        <!-- Logo intocado pelo recolher da sidebar — mora na topbar agora, não tem mais relação
-             com o estado dela. -->
-        <div class="hidden md:flex shrink-0 items-center gap-2 w-[296px]">
-            <div class="w-7 h-7 bg-foreground flex items-center justify-center shrink-0">
-                <app-icon name="activity" [size]="16" class="text-background" />
-            </div>
-            <span class="text-[15px] font-semibold text-foreground truncate">senai digital</span>
+        <!-- Logotipo horizontal — não depende do estado recolhido da sidebar. -->
+        <div class="hidden md:flex shrink-0 items-center w-[296px]">
+            <img
+                src="/assets/brand/logo-light.svg"
+                alt="senai digital"
+                width="220"
+                height="60"
+                class="h-10 w-auto max-w-full object-contain object-left shrink-0"
+            />
         </div>
         <div class="flex-1 flex justify-center">
             <div class="w-full max-w-xl">
@@ -203,13 +205,16 @@
         <div class="flex flex-col items-center text-center py-6 md:py-8 mb-8">
             <h1 class="text-3xl md:text-5xl font-light text-foreground">Bem-vindo de volta, {{ userName() }}!</h1>
         </div>
-        <app-fleet-home-view [overview]="overview()" [counts]="counts()" [totalCount]="lathes().length" />
+        <app-fleet-home-view
+            [overview]="overview()"
+            [counts]="counts()"
+            [totalCount]="lathes().length"
+            [healthTrend]="fleetEfficiencyTrend()"
+            (navigate)="goTo($event)"
+            (filterStatus)="goToStatus($event)"
+        />
         } @else { @if (fleetView() !== 'report-detail' && fleetView() !== 'cost-detail') {
         <div class="mb-10">
-            <div class="flex items-center gap-3 mb-2">
-                <app-icon name="activity" [size]="20" class="text-foreground" />
-                <p class="text-overline text-muted-foreground">Telemetria</p>
-            </div>
             <h1 class="text-4xl md:text-5xl font-light text-foreground">{{ viewTitles[fleetView()] }}</h1>
             @if (fleetView() === 'fleet') {
             <p class="text-muted-foreground mt-2 max-w-lg text-[15px]">
@@ -358,7 +363,10 @@
             (select)="select.emit($event)"
         />
         } } @if (fleetView() === 'maintenance') {
-        <app-fleet-maintenance-view [maintenanceSorted]="maintenanceSorted()" (select)="select.emit($event)" />
+        <app-fleet-maintenance-view
+            [maintenanceSorted]="maintenanceSorted()"
+            (select)="selectForMaintenance.emit($event)"
+        />
         } @if (fleetView() === 'reports') {
         <!-- Fase 2.2: "Energia & Custos" virou aba dentro de Relatórios (antes item de nav separado). -->
         <div
@@ -369,7 +377,7 @@
             <button
                 role="tab"
                 [attr.aria-selected]="reportsTab() === 'relatorios'"
-                (click)="reportsTab.set('relatorios')"
+                (click)="showReportsTab('relatorios')"
                 class="px-4 py-2.5 -mb-px text-[13px] font-semibold border-b-2 transition-colors"
                 [class.border-foreground]="reportsTab() === 'relatorios'"
                 [class.text-foreground]="reportsTab() === 'relatorios'"
@@ -381,7 +389,7 @@
             <button
                 role="tab"
                 [attr.aria-selected]="reportsTab() === 'energia'"
-                (click)="reportsTab.set('energia')"
+                (click)="showReportsTab('energia')"
                 class="px-4 py-2.5 -mb-px text-[13px] font-semibold border-b-2 transition-colors"
                 [class.border-foreground]="reportsTab() === 'energia'"
                 [class.text-foreground]="reportsTab() === 'energia'"
@@ -408,7 +416,7 @@
         <app-fleet-energy-view [energy]="energyEstimate()" [lathes]="lathes()" (openCost)="openCostDetail($event)" />
         } } @if (fleetView() === 'compare') {
         <!-- Fase E: nova view de comparação entre máquinas -->
-        <app-fleet-compare-view [lathes]="lathes()" (select)="select.emit($event)" />
+        <app-fleet-compare-view [lathes]="lathes()" [histories]="compareHistories()" (select)="select.emit($event)" />
         } @if (fleetView() === 'report-detail' && selectedReportKey(); as key) {
         <app-fleet-report-detail-view
             [reportKey]="key"

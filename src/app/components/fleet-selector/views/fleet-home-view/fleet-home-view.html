@@ -1,1 +1,109 @@
-<app-fleet-overview-view [overview]="overview()" [counts]="counts()" [totalCount]="totalCount()" />
+<div class="space-y-8">
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <section class="tile p-5 md:p-6" aria-labelledby="fleet-health-title">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <h2 id="fleet-health-title" class="text-[13px] font-semibold text-muted-foreground">
+                        Eficiência média da frota
+                    </h2>
+                    <p class="mt-2 text-3xl font-bold text-foreground tabular-nums">{{ overview().avgEfficiency }}%</p>
+                    <p class="mt-1 text-[11px] text-muted-foreground">Tendência das últimas leituras</p>
+                </div>
+                <button
+                    type="button"
+                    (click)="navigate.emit('reports')"
+                    class="text-[11px] font-semibold text-primary hover:underline"
+                >
+                    Relatórios <span aria-hidden="true">→</span>
+                </button>
+            </div>
+            <svg
+                viewBox="0 0 100 40"
+                preserveAspectRatio="none"
+                class="mt-5 h-28 w-full overflow-visible"
+                role="img"
+                aria-label="Gráfico de linha da eficiência média da frota nas últimas leituras"
+            >
+                <defs>
+                    <linearGradient id="fleet-efficiency-fill" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stop-color="var(--primary)" stop-opacity=".24" />
+                        <stop offset="100%" stop-color="var(--primary)" stop-opacity="0" />
+                    </linearGradient>
+                </defs>
+                <path [attr.d]="healthTrendPath() + ' L 100 40 L 0 40 Z'" fill="url(#fleet-efficiency-fill)" />
+                <path
+                    [attr.d]="healthTrendPath()"
+                    fill="none"
+                    stroke="var(--primary)"
+                    stroke-width="1.5"
+                    vector-effect="non-scaling-stroke"
+                />
+            </svg>
+            <div class="mt-3 flex justify-between text-[10px] text-muted-foreground">
+                <span>Leituras anteriores</span><span>Agora</span>
+            </div>
+        </section>
+
+        <section class="tile p-5 md:p-6" aria-labelledby="fleet-status-title">
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <h2 id="fleet-status-title" class="text-[13px] font-semibold text-muted-foreground">
+                        Disponibilidade operacional
+                    </h2>
+                    <p class="mt-1 text-[11px] text-muted-foreground">
+                        {{ counts().operational }} de {{ totalCount() }} máquinas em operação
+                    </p>
+                </div>
+                <button
+                    type="button"
+                    (click)="navigate.emit('fleet')"
+                    class="text-[11px] font-semibold text-primary hover:underline"
+                >
+                    Ver frota <span aria-hidden="true">→</span>
+                </button>
+            </div>
+            <div class="mt-5 flex items-center gap-5 sm:gap-7">
+                <div
+                    class="relative grid h-32 w-32 shrink-0 place-items-center rounded-full sm:h-36 sm:w-36"
+                    [style.background]="statusDonut()"
+                    role="img"
+                    [attr.aria-label]="counts().operational + ' operacionais, ' + counts().warning + ' em atenção, ' + counts().critical + ' críticas, ' + counts().maintenance + ' em manutenção'"
+                >
+                    <div
+                        class="grid h-[5.25rem] w-[5.25rem] place-content-center rounded-full bg-card text-center sm:h-24 sm:w-24"
+                    >
+                        <span class="text-2xl font-bold text-foreground">{{ totalCount() }}</span>
+                        <span class="text-[10px] text-muted-foreground">máquinas</span>
+                    </div>
+                </div>
+                <div class="min-w-0 flex-1 space-y-3">
+                    @for (status of statusOrder; track status) {
+                    <button type="button" (click)="filterStatus.emit(status)" class="w-full text-left">
+                        <div class="mb-1 flex justify-between gap-2 text-[11px]">
+                            <span class="flex items-center gap-2 text-muted-foreground">
+                                <span class="h-2 w-2 rounded-full" [class]="STATUS_META[status].dot"></span>
+                                {{ STATUS_META[status].label }}
+                            </span>
+                            <span class="font-semibold text-foreground tabular-nums">{{ counts()[status] }}</span>
+                        </div>
+                        <div class="h-1.5 overflow-hidden rounded-full bg-secondary">
+                            <div
+                                class="h-full rounded-full transition-[width] duration-300"
+                                [class]="STATUS_META[status].dot"
+                                [style.width.%]="totalCount() ? counts()[status] / totalCount() * 100 : 0"
+                            ></div>
+                        </div>
+                    </button>
+                    }
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <app-fleet-overview-view
+        [overview]="overview()"
+        [counts]="counts()"
+        [totalCount]="totalCount()"
+        [showStatusCounts]="false"
+    />
+</div>

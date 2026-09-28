@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
-import { LatheData } from '../../../../core/models/fleet.model';
+import { ChangeDetectionStrategy, Component, HostListener, computed, input, output, signal } from '@angular/core';
+import { LatheData, TelemetryHistory } from '../../../../core/models/fleet.model';
 import { STATUS_META } from '../../../../core/lib/status';
 import { svgPath, seededSeries } from '../../../../core/lib/sparkline';
 import { normalizeSearch } from '../../../../core/lib/text';
@@ -17,7 +17,7 @@ const COMPARE_METRICS: {
     /** Min/max para a sparkline. */
     sparkRange: { min: number; max: number };
     /** Chave no histórico de telemetria (TelemetryHistory), se disponível. */
-    historyKey?: 'rpm' | 'temperature' | 'vibration' | 'efficiency' | 'noise';
+    historyKey?: keyof TelemetryHistory;
 }[] = [
     {
         key: 'rpm',
@@ -89,6 +89,8 @@ const MAX_COMPARE = 4;
 export class FleetCompareView {
     /** Todas as máquinas disponíveis para seleção. */
     readonly lathes = input.required<LatheData[]>();
+    /** Histórico real para desenhar tendências; faltas de histórico usam uma linha neutra. */
+    readonly histories = input<Record<string, TelemetryHistory | undefined>>({});
 
     /** Emitido quando o usuário clica em "Ver detalhes" de uma máquina. */
     readonly select = output<LatheData>();
@@ -100,8 +102,10 @@ export class FleetCompareView {
     /** IDs das máquinas selecionadas para comparação (máx. MAX_COMPARE) — a ordem do array
      *  é a ordem das colunas da tabela comparativa abaixo. */
     protected selectedIds = signal<string[]>([]);
-    /** Texto de busca no picker. */
+    /** Texto de busca no seletor modal. */
     protected pickerSearch = signal('');
+    protected pickerModalOpen = signal(false);
+    protected slotIndices = Array.from({ length: MAX_COMPARE }, (_, i) => i);
 
     /** Máquinas selecionadas para comparação, na ordem de adição. */
     protected selectedLathes = computed(() =>
@@ -120,7 +124,9 @@ export class FleetCompareView {
     });
 
     protected canAdd = computed(() => this.selectedIds().length < MAX_COMPARE);
-    protected hasEnough = computed(() => this.selectedIds().length >= 2);
+    protected isIdle(lathe: LatheData): boolean {
+        return lathe.status === 'maintenance' || lathe.rpm <= 0;
+    }
 
     protected addLathe(id: string): void {
         if (!this.canAdd() || this.selectedIds().includes(id)) return;
@@ -129,6 +135,32 @@ export class FleetCompareView {
 
     protected removeLathe(id: string): void {
         this.selectedIds.update((ids) => ids.filter((x) => x !== id));
+    }
+
+    protected openPicker(): void {
+        if (!this.canAdd()) return;
+        this.pickerSearch.set('');
+        this.pickerModalOpen.set(true);
+    }
+
+    protected closePicker(): void {
+        this.pickerModalOpen.set(false);
+        this.pickerSearch.set('');
+    }
+
+    protected pickForSlot(id: string): void {
+        this.addLathe(id);
+        this.closePicker();
+    }
+
+    protected clearAll(): void {
+        this.selectedIds.set([]);
+        this.closePicker();
+    }
+
+    @HostListener('document:keydown.escape')
+    protected onEsc(): void {
+        if (this.pickerModalOpen()) this.closePicker();
     }
 
     /** Valor numérico de uma métrica para uma máquina. */
@@ -149,19 +181,21 @@ export class FleetCompareView {
     protected bestIndex(metric: (typeof COMPARE_METRICS)[number]): number | null {
         const lathes = this.selectedLathes();
         if (lathes.length < 2) return null;
-        const values = lathes.map((l) => this.metricValue(l, metric));
+        const live = lathes
+            .map((lathe, index) => ({ index, value: this.metricValue(lathe, metric), idle: this.isIdle(lathe) }))
+            .filter((entry) => !entry.idle || metric.key === 'hoursWorked');
+        if (live.length < 2) return null;
+        const values = live.map((entry) => entry.value);
         const best = metric.lowerIsBetter ? Math.min(...values) : Math.max(...values);
-        const idx = values.indexOf(best);
-        // Só destaca se houver diferença real
-        if (values.filter((v) => v === best).length === lathes.length) return null;
-        return idx;
+        if (values.every((value) => value === best)) return null;
+        return live.find((entry) => entry.value === best)?.index ?? null;
     }
 
     /** Classe de texto de destaque para a célula melhor. */
     protected bestTextClass(metric: (typeof COMPARE_METRICS)[number], index: number): string {
-        if (this.bestIndex(metric) === index) {
-            return metric.lowerIsBetter ? 'text-[var(--status-green)]' : 'text-[var(--status-green)]';
-        }
+        const lathe = this.selectedLathes()[index];
+        if (lathe && this.isIdle(lathe) && metric.key !== 'hoursWorked') return 'text-muted-foreground';
+        if (this.bestIndex(metric) === index) return 'text-[var(--status-green)]';
         return 'text-foreground';
     }
 
@@ -173,13 +207,16 @@ export class FleetCompareView {
 
     /** Sparkline SVG para um histórico de série. */
     protected sparklinePath(lathe: LatheData, metric: (typeof COMPARE_METRICS)[number]): string {
-        // Usa seededSeries como fallback quando o histórico real não está disponível
-        const series = seededSeries(
-            lathe.id + (metric.historyKey ?? metric.key),
-            this.metricValue(lathe, metric),
-            this.metricValue(lathe, metric) * 0.05,
-            20,
-        );
+        const history = metric.historyKey ? this.histories()[lathe.id]?.[metric.historyKey] : undefined;
+        const series =
+            history && history.length > 1
+                ? history.slice(-20)
+                : seededSeries(
+                      lathe.id + (metric.historyKey ?? metric.key),
+                      this.metricValue(lathe, metric),
+                      this.metricValue(lathe, metric) * 0.05,
+                      20,
+                  );
         return svgPath(series, metric.sparkRange.min, metric.sparkRange.max, 60, 20);
     }
 

@@ -94,7 +94,7 @@
     } @if (activeTab() === 'graphs') {
     <app-lathe-charts [latheData]="lathe()" [history]="history()" />
     } @if (activeTab() === 'maintenance') {
-    <div class="space-y-6 max-w-[560px] mx-auto">
+    <div class="space-y-6">
         <div class="tile p-5">
             <div class="flex flex-col gap-1 mb-5">
                 <h3 class="font-semibold text-[17px]">{{ lathe().name }}</h3>
@@ -190,20 +190,34 @@
             <h3 class="font-semibold text-[13px] mb-3 uppercase tracking-wider text-muted-foreground ml-1">
                 Histórico
             </h3>
-            <div class="space-y-3">
-                @for (m of maintenanceHistory(); track $index) {
-                <div class="flex flex-col p-4 bg-card border border-border/50 gap-2">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center gap-2">
-                            <app-icon name="check-circle-2" [size]="16" class="text-[var(--status-green)]" />
-                            <span class="font-semibold text-[14px]">{{ m.type }}</span>
+            @if (maintenanceHistory().length > 0) {
+            <div>
+                @for (m of maintenanceHistory(); track $index; let last = $last) {
+                <div class="relative flex gap-3" [class.pb-4]="!last">
+                    @if (!last) {
+                    <span class="absolute left-4 top-8 bottom-0 w-px bg-border" aria-hidden="true"></span>
+                    }
+                    <span
+                        class="relative z-10 shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+                        [class]="maintenanceTypeMeta(m.type).bg"
+                    >
+                        <app-icon [name]="maintenanceTypeMeta(m.type).icon" [size]="15" class="text-white" />
+                    </span>
+                    <div class="flex-1 min-w-0 tile p-3.5 mb-0">
+                        <div class="flex justify-between items-center gap-2 mb-1">
+                            <span class="font-semibold text-[14px] truncate">{{ m.type }}</span>
+                            <span class="tag tag-green shrink-0">{{ m.status }}</span>
                         </div>
-                        <span class="tag tag-green">{{ m.status }}</span>
+                        <p class="text-[13px] text-muted-foreground">{{ m.date }} • {{ m.tech }}</p>
                     </div>
-                    <span class="text-[13px] text-muted-foreground">{{ m.date }} • {{ m.tech }}</span>
                 </div>
                 }
             </div>
+            } @else {
+            <div class="tile p-5 text-center text-[13px] text-muted-foreground">
+                Nenhum registro de manutenção anterior.
+            </div>
+            }
         </div>
     </div>
     }

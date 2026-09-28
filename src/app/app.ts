@@ -1,21 +1,33 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
-import { filter } from 'rxjs';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    DestroyRef,
+    HostListener,
+    computed,
+    effect,
+    inject,
+    signal,
+} from '@angular/core';
+import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
 import { AuthService } from './core/services/auth.service';
 import { FleetService } from './core/services/fleet.service';
 import { ToastService } from './core/services/toast.service';
 import { AuthUser, LatheData } from './core/models/fleet.model';
+import { DEFAULT_FLEET_NAV, FleetNav, fleetNavFromQuery, fleetNavToQuery } from './core/models/fleet-nav';
 
 import { LoginScreen } from './components/login-screen/login-screen';
 import { FleetSelector } from './components/fleet-selector/fleet-selector';
 import { ToastContainer } from './shared/toast/toast-container';
 import { Icon } from './shared/icon/icon';
 import { FleetCommandsView } from './components/fleet-selector/views/fleet-commands-view/fleet-commands-view';
+import { PageSkeleton } from './shared/page-skeleton/page-skeleton';
+
+const MACHINE_VIEWS = new Set(['digital-twin', 'dashboard', 'graphs', 'maintenance']);
 
 @Component({
     selector: 'app-root',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [LoginScreen, FleetSelector, ToastContainer, Icon, FleetCommandsView],
+    imports: [LoginScreen, FleetSelector, ToastContainer, Icon, FleetCommandsView, PageSkeleton],
     templateUrl: './app.html',
 })
 export class App {
@@ -29,6 +41,11 @@ export class App {
      *  vive aqui (não em FleetSelector nem no componente de detalhe) porque é sincronizada com
      *  a URL (`?view=`) em syncStateFromUrl/syncUrlFromState. */
     protected view = signal<string>('dashboard');
+    protected fleetNav = signal<FleetNav>(DEFAULT_FLEET_NAV);
+    protected isOnline = signal(typeof navigator === 'undefined' || navigator.onLine);
+    protected systemError = signal<string | null>(null);
+    protected showPageSkeleton = signal(false);
+    private routeLoadingTimer: number | null = null;
     /** Fase 2.3: painel global de Ajuda — substitui "Central de Comandos"/"Dicas" como itens de nav. */
     protected isHelpOpen = signal(false);
     /** Fase 3.1: vive aqui (não em FleetSelector) porque FleetSelector é destruído ao
@@ -43,21 +60,40 @@ export class App {
         return this.fleet().find((l) => l.id === id) ?? null;
     });
 
+    protected notFoundLatheId = computed(() => {
+        const id = this.fleetService.selectedLatheId();
+        return id !== null && this.selectedLathe() === null ? id : null;
+    });
+
     protected latheHistory = computed(() => {
         const id = this.selectedLathe()?.id;
         return id ? this.fleetService.historyFor(id) : undefined;
     });
 
     constructor() {
+        this.syncStateFromUrl(window.location.pathname + window.location.search);
         // Sincroniza URL -> signals (suporte a refresh, navegador e links diretos).
-        const routerEventsSub = this.router.events
-            .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
-            .subscribe((e) => this.syncStateFromUrl(e.urlAfterRedirects));
-        inject(DestroyRef).onDestroy(() => routerEventsSub.unsubscribe());
+        const routerEventsSub = this.router.events.subscribe((event) => {
+            if (event instanceof NavigationStart) {
+                this.startRouteLoading();
+            } else if (event instanceof NavigationEnd) {
+                this.finishRouteLoading();
+                this.syncStateFromUrl(event.urlAfterRedirects);
+            } else if (event instanceof NavigationCancel) {
+                this.finishRouteLoading();
+            } else if (event instanceof NavigationError) {
+                this.finishRouteLoading();
+                this.systemError.set('Não foi possível abrir esta página. Tente novamente.');
+            }
+        });
+        inject(DestroyRef).onDestroy(() => {
+            routerEventsSub.unsubscribe();
+            this.finishRouteLoading();
+        });
 
         // Sincroniza signals -> URL (signals sao a fonte de verdade; URL reflete).
         effect(() => {
-            this.syncUrlFromState(this.auth.user(), this.fleetService.selectedLatheId(), this.view());
+            this.syncUrlFromState(this.auth.user(), this.fleetService.selectedLatheId(), this.view(), this.fleetNav());
         });
     }
 
@@ -71,16 +107,65 @@ export class App {
                 this.fleetService.selectedLatheId.set(id);
             }
             const viewParam = new URLSearchParams(query ?? '').get('view');
-            if (viewParam && this.view() !== viewParam) {
-                this.view.set(viewParam);
+            const nextView = viewParam && MACHINE_VIEWS.has(viewParam) ? viewParam : 'dashboard';
+            if (this.view() !== nextView) {
+                this.view.set(nextView);
             }
-        } else if (segments[0] === 'frota' && this.fleetService.selectedLatheId() !== null) {
-            this.fleetService.selectedLatheId.set(null);
+        } else if (segments[0] === 'frota') {
+            if (this.fleetService.selectedLatheId() !== null) this.fleetService.selectedLatheId.set(null);
+            const next = fleetNavFromQuery(query ?? '', this.fleetNav());
+            if (fleetNavToQuery(next) !== fleetNavToQuery(this.fleetNav())) this.fleetNav.set(next);
         }
     }
 
-    private syncUrlFromState(user: AuthUser | null, latheId: string | null, currentView: string): void {
-        const target = !user ? '/login' : latheId ? `/maquina/${latheId}?view=${currentView}` : '/frota';
+    private startRouteLoading(): void {
+        this.finishRouteLoading();
+        this.routeLoadingTimer = window.setTimeout(() => this.showPageSkeleton.set(true), 250);
+    }
+
+    private finishRouteLoading(): void {
+        if (this.routeLoadingTimer !== null) window.clearTimeout(this.routeLoadingTimer);
+        this.routeLoadingTimer = null;
+        this.showPageSkeleton.set(false);
+    }
+
+    @HostListener('window:online')
+    protected onOnline(): void {
+        this.isOnline.set(true);
+    }
+
+    @HostListener('window:offline')
+    protected onOffline(): void {
+        this.isOnline.set(false);
+    }
+
+    @HostListener('window:error', ['$event'])
+    protected onWindowError(event: ErrorEvent): void {
+        if (event instanceof ErrorEvent && event.message) {
+            this.systemError.set('Ocorreu um erro inesperado. Recarregue a página para continuar.');
+        }
+    }
+
+    @HostListener('window:unhandledrejection')
+    protected onUnhandledRejection(): void {
+        this.systemError.set('Uma operação falhou inesperadamente. Tente recarregar a página.');
+    }
+
+    protected retrySystem(): void {
+        if (!this.isOnline()) return;
+        window.location.reload();
+    }
+
+    protected closeSystemError(): void {
+        this.systemError.set(null);
+    }
+
+    private syncUrlFromState(user: AuthUser | null, latheId: string | null, currentView: string, nav: FleetNav): void {
+        const target = !user
+            ? '/login'
+            : latheId
+              ? `/maquina/${latheId}?view=${currentView}`
+              : `/frota?${fleetNavToQuery(nav)}`;
         if (this.router.url === target) return;
 
         const isSameMachine = latheId !== null && latheId === this.previousLatheId;
@@ -97,11 +182,12 @@ export class App {
         this.fleetService.stop();
         this.auth.logout();
         this.fleetService.selectedLatheId.set(null);
+        this.fleetNav.set(DEFAULT_FLEET_NAV);
     }
 
-    protected onSelectLathe(lathe: LatheData): void {
+    protected onSelectLathe(lathe: LatheData, tab: string = 'dashboard'): void {
         this.fleetService.selectedLatheId.set(lathe.id);
-        this.view.set('dashboard');
+        this.view.set(tab);
     }
 
     protected onBackToFleet(): void {

@@ -64,6 +64,7 @@
                     <input
                         id="scheduler-date"
                         type="date"
+                        [min]="today"
                         name="date"
                         [ngModel]="date()"
                         (ngModelChange)="date.set($event)"

@@ -33,7 +33,7 @@ describe('App', () => {
         auth.user.set({ name: 'Administrador', role: 'Administrador do Sistema' });
         TestBed.flushEffects();
         await fixture.whenStable();
-        expect(router.url).toBe('/frota');
+        expect(router.url).toBe('/frota?v=home');
 
         fleetService.selectedLatheId.set('TC-01');
         TestBed.flushEffects();

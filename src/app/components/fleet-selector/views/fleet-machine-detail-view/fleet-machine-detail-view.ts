@@ -22,6 +22,13 @@ const NAV_ITEMS: { id: MachineTab; label: string; icon: string }[] = [
     { id: 'maintenance', label: 'Manutenção', icon: 'calendar' },
 ];
 
+/** Ícone e cor por tipo, para identificar cada registro na linha do tempo. */
+const MAINTENANCE_TYPE_META: Record<MaintenanceRecord['type'], { icon: string; bg: string }> = {
+    Preventiva: { icon: 'shield-check', bg: 'bg-[var(--status-blue)]' },
+    Preditiva: { icon: 'activity', bg: 'bg-[var(--status-purple)]' },
+    Corretiva: { icon: 'alert-triangle', bg: 'bg-[var(--status-red)]' },
+};
+
 @Component({
     selector: 'app-fleet-machine-detail-view',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -51,4 +58,8 @@ export class FleetMachineDetailView {
     protected meta = computed(() => STATUS_META[this.lathe().status]);
     protected anomaly = computed(() => anomalyScore(this.lathe().status, this.lathe().vibration));
     protected headline = computed(() => scoreHeadline(this.lathe().efficiency));
+
+    protected maintenanceTypeMeta(type: MaintenanceRecord['type']) {
+        return MAINTENANCE_TYPE_META[type];
+    }
 }

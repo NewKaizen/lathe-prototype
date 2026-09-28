@@ -1,17 +1,23 @@
 <div class="space-y-8">
-    <!-- Picker de máquinas -->
+    <!-- Slots de comparação: seleção progressiva e limite visível de quatro máquinas. -->
     <div>
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center justify-between mb-3">
             <div>
-                <h3 class="text-[15px] font-semibold text-foreground">Selecionar Máquinas</h3>
+                <h3 class="text-[15px] font-semibold text-foreground">Máquinas na comparação</h3>
+                @if (selectedLathes().length < 2) {
                 <p class="text-[12px] text-muted-foreground mt-0.5">
-                    {{ selectedIds().length }}/{{ maxCompare }} selecionadas @if (!canAdd()) { — limite atingido }
+                    Selecione ao menos 2 tornos para iniciar a comparação lado a lado.
                 </p>
+                } @else {
+                <p class="text-[12px] text-muted-foreground mt-0.5">
+                    {{ selectedLathes().length }}/{{ maxCompare }} selecionadas
+                </p>
+                }
             </div>
             @if (selectedLathes().length > 0) {
             <button
                 type="button"
-                (click)="selectedIds.set([])"
+                (click)="clearAll()"
                 class="text-[12px] font-semibold text-muted-foreground hover:text-foreground transition-colors"
             >
                 Limpar tudo
@@ -19,10 +25,63 @@
             }
         </div>
 
-        <!-- Campo de busca + lista para adicionar -->
-        @if (canAdd()) {
-        <div class="space-y-2">
-            <div class="relative">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            @for (i of slotIndices; track i) { @if (selectedLathes()[i]; as l) {
+            <div class="tile relative p-3 pr-8">
+                <button
+                    type="button"
+                    (click)="removeLathe(l.id)"
+                    [attr.aria-label]="'Remover ' + l.name + ' da comparação'"
+                    title="Remover"
+                    class="absolute top-2 right-2 p-0.5 text-muted-foreground/60 hover:text-foreground transition-colors"
+                >
+                    <app-icon name="x" [size]="13" />
+                </button>
+                <span class="flex items-center gap-1.5 mb-1">
+                    <span class="w-2 h-2 rounded-full shrink-0" [class]="STATUS_META[l.status].dot"></span>
+                    <span class="text-[13px] font-semibold text-foreground truncate">{{ l.name }}</span>
+                </span>
+                <p class="text-[11px] text-muted-foreground truncate mb-1.5">{{ l.model }} · {{ l.sector }}</p>
+                <span [class]="STATUS_META[l.status].badge">{{ STATUS_META[l.status].label }}</span>
+            </div>
+            } @else {
+            <button
+                type="button"
+                (click)="openPicker()"
+                [disabled]="!canAdd()"
+                aria-label="Adicionar máquina à comparação"
+                class="tile border-dashed flex flex-col items-center justify-center gap-1 p-3 min-h-[92px] text-muted-foreground hover:text-primary hover:border-primary transition-colors disabled:opacity-40 disabled:pointer-events-none"
+            >
+                <app-icon name="plus" [size]="18" />
+                <span class="text-[12px] font-semibold">Adicionar</span>
+            </button>
+            } }
+        </div>
+    </div>
+
+    @if (pickerModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 modal-overlay-scrim" aria-hidden="true" (click)="closePicker()"></div>
+        <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="compare-picker-title"
+            class="relative w-full max-w-[420px] max-h-[85vh] overflow-y-auto custom-scrollbar tile p-6 animate-fade-in"
+        >
+            <button
+                type="button"
+                (click)="closePicker()"
+                aria-label="Fechar"
+                class="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+            >
+                <app-icon name="x" [size]="16" aria-hidden="true" />
+            </button>
+
+            <h2 id="compare-picker-title" class="text-[17px] font-semibold text-foreground mb-4">
+                Adicionar máquina à comparação
+            </h2>
+
+            <div class="relative mb-3">
                 <app-icon
                     name="search"
                     [size]="14"
@@ -32,17 +91,19 @@
                     type="text"
                     [value]="pickerSearch()"
                     (input)="pickerSearch.set($any($event.target).value)"
-                    placeholder="Buscar máquina para adicionar..."
+                    placeholder="Buscar por nome ou ID..."
                     aria-label="Buscar máquina para adicionar"
+                    autofocus
                     class="w-full h-9 pl-9 pr-3 bg-card border border-border focus:border-primary text-[13px] text-foreground placeholder:text-muted-foreground outline-none transition-colors"
                 />
             </div>
+
             @if (availableLathes().length > 0) {
-            <div class="max-h-[200px] overflow-y-auto custom-scrollbar tile border border-border">
+            <div class="max-h-[320px] overflow-y-auto custom-scrollbar -mx-1 px-1">
                 @for (l of availableLathes(); track l.id) {
                 <button
                     type="button"
-                    (click)="addLathe(l.id)"
+                    (click)="pickForSlot(l.id)"
                     class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-secondary/40 transition-colors text-left border-b border-border/40 last:border-b-0"
                 >
                     <span class="w-2 h-2 rounded-full shrink-0" [class]="STATUS_META[l.status].dot"></span>
@@ -55,7 +116,6 @@
                     <span [class]="STATUS_META[l.status].badge" class="shrink-0"
                         >{{ STATUS_META[l.status].label }}</span
                     >
-                    <app-icon name="plus" [size]="14" class="text-primary shrink-0" />
                 </button>
                 }
             </div>
@@ -65,31 +125,6 @@
             </p>
             }
         </div>
-        }
-    </div>
-
-    <!-- Estado vazio: 0 máquinas selecionadas -->
-    @if (selectedLathes().length === 0) {
-    <div class="flex flex-col items-center justify-center py-20 text-center">
-        <div class="w-16 h-16 bg-secondary flex items-center justify-center mb-4">
-            <app-icon name="git-compare-arrows" [size]="32" class="text-muted-foreground/40" />
-        </div>
-        <h3 class="text-[17px] font-semibold text-foreground mb-1">Selecione as máquinas</h3>
-        <p class="text-muted-foreground max-w-sm">
-            Escolha ao menos 2 tornos no seletor acima para iniciar a comparação lado a lado.
-        </p>
-    </div>
-    }
-
-    <!-- Estado intermediário: apenas 1 máquina selecionada -->
-    @if (selectedLathes().length === 1) {
-    <div class="flex flex-col items-center justify-center py-12 text-center">
-        <app-icon name="plus-circle" [size]="32" class="text-muted-foreground/30 mb-3" />
-        <p class="text-[14px] font-semibold text-foreground mb-1">Adicione mais uma máquina</p>
-        <p class="text-[13px] text-muted-foreground">
-            Você selecionou <span class="font-semibold">{{ selectedLathes()[0].name }}</span>. Adicione ao menos mais
-            uma para iniciar a comparação.
-        </p>
     </div>
     }
 
@@ -99,28 +134,37 @@
         <h3 class="text-[13px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
             Comparação Lado a Lado
         </h3>
-        <!--
-            overflow-x-auto: padrão responsivo para tabelas densas (Fase B / Fase E).
-            Cada coluna tem largura fixa de 180px + 1 coluna de rótulo de 160px.
-        -->
+        <!-- A largura mínima preserva leitura; com menos colunas, a tabela usa todo o espaço. -->
         <div class="overflow-x-auto">
-            <div class="tile overflow-hidden" [style.min-width.px]="160 + selectedLathes().length * 180">
+            <div class="tile overflow-hidden" [style.min-width.px]="160 + selectedLathes().length * 170">
                 <!-- Header da tabela: uma coluna por máquina -->
                 <div
                     class="grid border-b border-border bg-secondary/40"
-                    [style.grid-template-columns]="'160px ' + 'repeat(' + selectedLathes().length + ', 180px)'"
+                    [style.grid-template-columns]="'160px ' + 'repeat(' + selectedLathes().length + ', minmax(170px, 1fr))'"
                 >
                     <div class="px-4 py-3 text-overline text-muted-foreground">Métrica</div>
                     @for (l of selectedLathes(); track l.id; let idx = $index) {
                     <div class="px-4 py-3 border-l border-border/40">
                         <div class="flex items-center gap-2 mb-1">
                             <span class="w-2 h-2 rounded-full shrink-0" [class]="STATUS_META[l.status].dot"></span>
-                            <span class="text-[13px] font-semibold text-foreground truncate">{{ l.name }}</span>
+                            <span class="text-[13px] font-semibold text-foreground truncate flex-1">{{ l.name }}</span>
+                            <button
+                                type="button"
+                                (click)="removeLathe(l.id)"
+                                [attr.aria-label]="'Remover ' + l.name + ' da comparação'"
+                                title="Remover da comparação"
+                                class="shrink-0 p-0.5 text-muted-foreground/60 hover:text-foreground transition-colors"
+                            >
+                                <app-icon name="x" [size]="13" />
+                            </button>
                         </div>
                         <p class="text-[11px] text-muted-foreground truncate">{{ l.model }} · {{ l.sector }}</p>
                         <span class="mt-1.5 inline-block" [class]="STATUS_META[l.status].badge"
                             >{{ STATUS_META[l.status].label }}</span
                         >
+                        @if (isIdle(l)) {
+                        <p class="mt-1 text-[10px] text-muted-foreground">Parada — fora da comparação de valores</p>
+                        }
                         <button
                             type="button"
                             (click)="select.emit(l)"
@@ -137,7 +181,7 @@
                 @for (metric of metrics; track metric.key) {
                 <div
                     class="grid border-b border-border/40 last:border-b-0 items-center"
-                    [style.grid-template-columns]="'160px ' + 'repeat(' + selectedLathes().length + ', 180px)'"
+                    [style.grid-template-columns]="'160px ' + 'repeat(' + selectedLathes().length + ', minmax(170px, 1fr))'"
                 >
                     <!-- Rótulo da métrica -->
                     <div class="px-4 py-3 bg-secondary/20">
@@ -162,7 +206,7 @@
                             </span>
                             <span class="text-[10px] text-muted-foreground">{{ metric.unit }}</span>
                             @if (bestIndex(metric) === idx) {
-                            <app-icon name="trending-up" [size]="12" class="text-[var(--status-green)] ml-1" />
+                            <span class="ml-1 tag tag-green text-[9px]" title="Melhor valor comparável">melhor</span>
                             }
                         </div>
                         <!-- Sparkline por métrica numérica -->
@@ -190,7 +234,7 @@
                 <!-- Linha de processo atual (string, sem sparkline) -->
                 <div
                     class="grid border-b border-border/40 items-start"
-                    [style.grid-template-columns]="'160px ' + 'repeat(' + selectedLathes().length + ', 180px)'"
+                    [style.grid-template-columns]="'160px ' + 'repeat(' + selectedLathes().length + ', minmax(170px, 1fr))'"
                 >
                     <div class="px-4 py-3 bg-secondary/20">
                         <span class="flex items-center gap-2 text-[12px] font-semibold text-muted-foreground">
@@ -212,7 +256,7 @@
                 <!-- Linha de manutenção -->
                 <div
                     class="grid items-start"
-                    [style.grid-template-columns]="'160px ' + 'repeat(' + selectedLathes().length + ', 180px)'"
+                    [style.grid-template-columns]="'160px ' + 'repeat(' + selectedLathes().length + ', minmax(170px, 1fr))'"
                 >
                     <div class="px-4 py-3 bg-secondary/20">
                         <span class="flex items-center gap-2 text-[12px] font-semibold text-muted-foreground">

@@ -22,6 +22,7 @@ export class FleetOverviewView {
     readonly overview = input.required<FleetOverviewSummary>();
     readonly counts = input.required<Record<LatheStatus, number>>();
     readonly totalCount = input.required<number>();
+    readonly showStatusCounts = input(true);
 
     readonly select = output<LatheData>();
 

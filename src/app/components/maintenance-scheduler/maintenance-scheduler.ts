@@ -29,11 +29,22 @@ export class MaintenanceScheduler {
     protected time = signal('');
     protected technician = signal('');
     protected notes = signal('');
+    protected today = (() => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    })();
 
     protected onSubmit(): void {
         const m = this.machine();
-        if (!m || !this.date() || !this.time() || !this.technician()) {
+        if (!m || !this.date() || !this.time() || !this.technician().trim()) {
             this.toast.error('Preencha os campos obrigatórios', 'Data, horário e técnico são necessários.');
+            return;
+        }
+        if (this.date() < this.today) {
+            this.toast.error('Escolha uma data válida', 'A manutenção não pode ser agendada no passado.');
             return;
         }
 
@@ -42,7 +53,7 @@ export class MaintenanceScheduler {
             type: this.type(),
             date: this.date(),
             time: this.time(),
-            technician: this.technician(),
+            technician: this.technician().trim(),
             notes: this.notes(),
         });
 

@@ -1,23 +1,96 @@
 @if (!auth.user()) {
 <app-login-screen (login)="onLogin($event)" />
 <app-toast-container />
+} @else { @if (notFoundLatheId(); as badId) {
+<main class="min-h-screen grid place-items-center bg-background p-6 text-center">
+    <section class="tile max-w-md p-8">
+        <app-icon name="alert-triangle" [size]="36" class="mx-auto mb-4 text-[var(--status-yellow)]" />
+        <h1 class="text-xl font-semibold text-foreground">Máquina não encontrada</h1>
+        <p class="mt-2 text-sm text-muted-foreground">
+            O identificador “{{ badId }}” não corresponde a uma máquina da frota.
+        </p>
+        <button
+            type="button"
+            (click)="onBackToFleet()"
+            class="mt-5 h-10 px-4 bg-primary text-primary-foreground font-semibold"
+        >
+            Voltar para a frota
+        </button>
+    </section>
+</main>
 } @else {
 <app-fleet-selector
     [lathes]="fleet()"
     [userName]="auth.user()!.name"
     [page]="fleetPage()"
+    [nav]="fleetNav()"
     [selectedLathe]="selectedLathe()"
     [latheHistory]="latheHistory()"
     [tick]="tick()"
     [machineTab]="view()"
     (machineTabChange)="view.set($event)"
+    (navChange)="fleetNav.set($event)"
     (select)="onSelectLathe($event)"
+    (selectForMaintenance)="onSelectLathe($event, 'maintenance')"
     (deselect)="onBackToFleet()"
     (logout)="onLogout()"
     (openHelp)="isHelpOpen.set(true)"
     (pageChange)="fleetPage.set($event)"
 />
+}
 <app-toast-container />
+} @if (showPageSkeleton()) {
+<app-page-skeleton />
+} @if (!isOnline()) {
+<div
+    class="fixed inset-0 z-[80] grid place-items-center bg-background/80 p-5 backdrop-blur-sm"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="system-offline-title"
+>
+    <section class="tile w-full max-w-md p-7 text-center shadow-2xl">
+        <app-icon name="wifi" [size]="34" class="mx-auto mb-4 text-[var(--status-yellow)]" />
+        <h2 id="system-offline-title" class="text-lg font-semibold text-foreground">Sem conexão com a internet</h2>
+        <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
+            A conexão foi interrompida. Reconecte-se para continuar usando todos os recursos.
+        </p>
+        <div class="mt-5 inline-flex items-center gap-2 text-xs font-medium text-[var(--status-yellow)]">
+            <span class="h-2 w-2 animate-pulse rounded-full bg-current"></span> Aguardando conexão
+        </div>
+    </section>
+</div>
+} @else if (systemError(); as errorMessage) {
+<div
+    class="fixed inset-0 z-[80] grid place-items-center bg-background/80 p-5 backdrop-blur-sm"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="system-error-title"
+    aria-describedby="system-error-description"
+>
+    <section class="tile w-full max-w-md p-7 text-center shadow-2xl">
+        <app-icon name="alert-triangle" [size]="34" class="mx-auto mb-4 text-[var(--status-red)]" />
+        <h2 id="system-error-title" class="text-lg font-semibold text-foreground">O sistema encontrou um problema</h2>
+        <p id="system-error-description" class="mt-2 text-sm leading-relaxed text-muted-foreground">
+            {{ errorMessage }}
+        </p>
+        <div class="mt-6 flex justify-center gap-2">
+            <button
+                type="button"
+                (click)="closeSystemError()"
+                class="h-10 border border-border px-4 text-sm font-medium text-foreground hover:bg-secondary"
+            >
+                Continuar
+            </button>
+            <button
+                type="button"
+                (click)="retrySystem()"
+                class="h-10 bg-primary px-4 text-sm font-semibold text-primary-foreground"
+            >
+                Recarregar
+            </button>
+        </div>
+    </section>
+</div>
 } @if (auth.user()) {
 <!-- Fase 2.3: ícone de Ajuda — substitui "Central de Comandos"/"Dicas" como itens de nav.
      No desktop mora no rodapé de cada sidebar (junto de Configurações/Sair, perto do usuário);

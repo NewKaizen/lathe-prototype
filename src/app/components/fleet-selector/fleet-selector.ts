@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    HostListener,
+    computed,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
     LatheData,
@@ -31,18 +41,14 @@ import { FleetCostDetailView } from './views/fleet-cost-detail-view/fleet-cost-d
 import { FleetCompareView } from './views/fleet-compare-view/fleet-compare-view';
 import { FleetMachineDetailView } from './views/fleet-machine-detail-view/fleet-machine-detail-view';
 import { NotificationsBell } from '../notifications-panel/notifications-panel';
+import { DEFAULT_FLEET_NAV, FleetNav, FleetTab, FleetView, ReportsTab } from '../../core/models/fleet-nav';
 
 /** Nav principal — máx. 5 itens (Fase 2.2). "Resumo" foi absorvido por "Início"
  *  (app-fleet-home-view já embute app-fleet-overview-view) e "Energia & Custos"
  *  virou uma aba dentro de "Relatórios". */
-type FleetView = 'home' | 'fleet' | 'maintenance' | 'reports' | 'compare' | 'report-detail' | 'cost-detail';
-
 /** Alvos de navegação "legados", ainda referenciados por sub-componentes e pela busca interna —
  *  goTo() os traduz para a view + aba correspondente da nova estrutura unificada (Fase 2.1). */
 type NavTarget = FleetView | 'alerts' | 'plant' | 'overview' | 'energy';
-
-type FleetTab = 'listagem' | 'alertas' | 'planta';
-type ReportsTab = 'relatorios' | 'energia';
 
 /** Página-pai de cada view "de documento" — usado para destaque de nav e breadcrumb. */
 const VIEW_PARENT: Partial<Record<FleetView, FleetView>> = {
@@ -145,6 +151,9 @@ export class FleetSelector {
     readonly userName = input<string>('Administrador');
 
     readonly select = output<LatheData>();
+    readonly selectForMaintenance = output<LatheData>();
+    readonly nav = input<FleetNav>(DEFAULT_FLEET_NAV);
+    readonly navChange = output<FleetNav>();
     readonly logout = output<void>();
     /** Abre o painel global de Ajuda (renderizado em app.html, fora do escopo desta view). */
     readonly openHelp = output<void>();
@@ -189,12 +198,12 @@ export class FleetSelector {
         });
     }
 
-    protected fleetView = signal<FleetView>('home');
-    protected fleetTab = signal<FleetTab>('listagem');
+    protected fleetView = computed(() => this.nav().view);
+    protected fleetTab = computed(() => this.nav().tab);
     protected fleetTabs = FLEET_TABS;
     protected statusFilters = STATUS_FILTERS;
     protected layoutModes = LAYOUT_MODES;
-    protected reportsTab = signal<ReportsTab>('relatorios');
+    protected reportsTab = computed(() => this.nav().reportsTab);
     protected search = signal('');
     protected filter = signal<FilterStatus>('all');
     protected isSettingsOpen = signal(false);
@@ -205,8 +214,8 @@ export class FleetSelector {
     protected collapsedSectors = signal<Set<string>>(new Set());
     protected layoutMode = this.settings.fleetLayoutMode;
 
-    protected selectedReportKey = signal<ReportKey | null>(null);
-    protected selectedCostMachineId = signal<string | null>(null);
+    protected selectedReportKey = computed(() => this.nav().reportKey);
+    protected selectedCostMachineId = computed(() => this.nav().costMachineId);
 
     /** Topbar fixa (logo + busca central + notificações/perfil) — layout inspirado na
      *  Descomplica, agora padrão em todo o app (não mais exclusivo de Relatórios). */
@@ -217,6 +226,10 @@ export class FleetSelector {
     protected viewSubtitles = VIEW_SUBTITLES;
     protected STATUS_META = STATUS_META;
     protected statusOrder: LatheStatus[] = ['critical', 'warning', 'maintenance', 'operational'];
+
+    private emitNav(patch: Partial<FleetNav>): void {
+        this.navChange.emit({ ...this.nav(), ...patch });
+    }
 
     protected filtered = computed(() => {
         const s = normalizeSearch(this.search());
@@ -254,7 +267,7 @@ export class FleetSelector {
     protected sectorCount = computed(() => new Set(this.lathes().map((l) => l.sector)).size);
 
     protected showFleetTab(tab: FleetTab): void {
-        this.fleetTab.set(tab);
+        this.emitNav({ view: 'fleet', tab });
     }
 
     /** Fase 3.1: paginação (12/página) — só usada nos modos grade/lista de fleet-listing-view. */
@@ -301,32 +314,32 @@ export class FleetSelector {
      *  correspondente da estrutura unificada da Fase 2.1, preservando os destinos que os
      *  sub-componentes (home, reports, busca interna) já emitem. */
     protected goTo(target: NavTarget): void {
+        // A seleção antiga não pode continuar cobrindo a página escolhida no menu.
+        if (this.selectedLathe()) this.deselect.emit();
         switch (target) {
             case 'alerts':
-                this.fleetTab.set('alertas');
-                this.fleetView.set('fleet');
+                this.emitNav({ view: 'fleet', tab: 'alertas' });
                 break;
             case 'plant':
-                this.fleetTab.set('planta');
-                this.fleetView.set('fleet');
+                this.emitNav({ view: 'fleet', tab: 'planta' });
                 break;
             case 'overview':
-                this.fleetView.set('home');
+                this.emitNav({ view: 'home' });
                 break;
             case 'energy':
-                this.reportsTab.set('energia');
-                this.fleetView.set('reports');
+                this.emitNav({ view: 'reports', reportsTab: 'energia' });
                 break;
             case 'fleet':
-                this.fleetTab.set('listagem');
-                this.fleetView.set('fleet');
+                this.emitNav({ view: 'fleet', tab: 'listagem' });
+                break;
+            case 'maintenance':
+                this.emitNav({ view: 'maintenance' });
                 break;
             case 'reports':
-                this.reportsTab.set('relatorios');
-                this.fleetView.set('reports');
+                this.emitNav({ view: 'reports', reportsTab: 'relatorios' });
                 break;
             default:
-                this.fleetView.set(target);
+                this.emitNav({ view: target });
         }
     }
 
@@ -335,13 +348,29 @@ export class FleetSelector {
     protected activeNavId = computed<FleetView>(() => VIEW_PARENT[this.fleetView()] ?? this.fleetView());
 
     protected openReportDetail(key: ReportKey): void {
-        this.selectedReportKey.set(key);
-        this.goTo('report-detail');
+        if (this.selectedLathe()) this.deselect.emit();
+        this.emitNav({ view: 'report-detail', reportKey: key });
     }
 
     protected openCostDetail(latheId: string): void {
-        this.selectedCostMachineId.set(latheId);
-        this.goTo('cost-detail');
+        if (this.selectedLathe()) this.deselect.emit();
+        this.emitNav({ view: 'cost-detail', costMachineId: latheId });
+    }
+
+    protected showReportsTab(tab: ReportsTab): void {
+        this.emitNav({ view: 'reports', reportsTab: tab });
+    }
+
+    protected goToStatus(status: LatheStatus): void {
+        this.filter.set(status);
+        this.pageChange.emit(1);
+        this.emitNav({ view: 'fleet', tab: 'listagem' });
+    }
+
+    @HostListener('document:keydown.escape')
+    protected onEscapeKey(): void {
+        if (this.isSchedulerOpen() || this.isSettingsOpen() || this.isProfileMenuOpen()) return;
+        if (this.selectedLathe()) this.deselect.emit();
     }
 
     protected selectedCostMachine = computed(() => this.lathes().find((l) => l.id === this.selectedCostMachineId()));
@@ -447,12 +476,29 @@ export class FleetSelector {
 
     protected overview = computed(() => {
         const l = this.lathes();
-        const operational = l.filter((x) => x.status === 'operational');
-        const avgEfficiency = Math.round(operational.reduce((s, x) => s + x.efficiency, 0) / (operational.length || 1));
+        const avgEfficiency = Math.round(l.reduce((s, x) => s + x.efficiency, 0) / (l.length || 1));
         const avgTemp = Math.round(l.reduce((s, x) => s + x.temperature, 0) / (l.length || 1));
         const totalHours = l.reduce((s, x) => s + x.hoursWorked, 0);
         const topPerformers = [...l].sort((a, b) => b.efficiency - a.efficiency).slice(0, 3);
         return { avgEfficiency, avgTemp, totalHours: totalHours.toLocaleString('pt-BR'), topPerformers };
+    });
+
+    protected fleetEfficiencyTrend = computed(() => {
+        const histories = this.lathes()
+            .map((lathe) => this.fleetService.historyFor(lathe.id)?.efficiency ?? [])
+            .filter((series) => series.length > 0);
+        if (!histories.length) return [];
+        const length = Math.min(24, ...histories.map((series) => series.length));
+        return Array.from({ length }, (_, index) =>
+            Math.round(
+                histories.reduce((sum, series) => sum + series[series.length - length + index], 0) / histories.length,
+            ),
+        );
+    });
+
+    protected compareHistories = computed(() => {
+        this.tick();
+        return Object.fromEntries(this.lathes().map((lathe) => [lathe.id, this.fleetService.historyFor(lathe.id)]));
     });
 
     protected toggleSector(sector: string): void {

@@ -39,7 +39,7 @@
                 </p>
             </div>
         </div>
-        @for (s of statusOrder; track s) {
+        @if (showStatusCounts()) { @for (s of statusOrder; track s) {
         <div class="tile px-4 py-3 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <div class="w-2 h-2 rounded-full" [class]="STATUS_META[s].dot"></div>
@@ -47,6 +47,6 @@
             </div>
             <span class="text-[22px] font-bold text-foreground tabular-nums">{{ counts()[s] }}</span>
         </div>
-        }
+        } }
     </div>
 </div>
