@@ -46,6 +46,9 @@ export class App {
     protected systemError = signal<string | null>(null);
     protected showPageSkeleton = signal(false);
     private routeLoadingTimer: number | null = null;
+    private loginLoadingTimer: number | null = null;
+    private loginLoadingUntil = 0;
+    private routeLoading = false;
     /** Fase 2.3: painel global de Ajuda — substitui "Central de Comandos"/"Dicas" como itens de nav. */
     protected isHelpOpen = signal(false);
     /** Fase 3.1: vive aqui (não em FleetSelector) porque FleetSelector é destruído ao
@@ -89,6 +92,7 @@ export class App {
         inject(DestroyRef).onDestroy(() => {
             routerEventsSub.unsubscribe();
             this.finishRouteLoading();
+            if (this.loginLoadingTimer !== null) window.clearTimeout(this.loginLoadingTimer);
         });
 
         // Sincroniza signals -> URL (signals sao a fonte de verdade; URL reflete).
@@ -119,14 +123,37 @@ export class App {
     }
 
     private startRouteLoading(): void {
-        this.finishRouteLoading();
+        if (this.routeLoadingTimer !== null) window.clearTimeout(this.routeLoadingTimer);
+        this.routeLoading = true;
+        if (this.loginLoadingUntil > Date.now()) {
+            this.showPageSkeleton.set(true);
+            return;
+        }
         this.routeLoadingTimer = window.setTimeout(() => this.showPageSkeleton.set(true), 250);
     }
 
     private finishRouteLoading(): void {
         if (this.routeLoadingTimer !== null) window.clearTimeout(this.routeLoadingTimer);
         this.routeLoadingTimer = null;
+        this.routeLoading = false;
+        const remainingLoginLoading = this.loginLoadingUntil - Date.now();
+        if (remainingLoginLoading > 0) {
+            this.showPageSkeleton.set(true);
+            this.scheduleLoginLoadingFinish(remainingLoginLoading);
+            return;
+        }
+        this.loginLoadingUntil = 0;
         this.showPageSkeleton.set(false);
+    }
+
+    private scheduleLoginLoadingFinish(delay: number): void {
+        if (this.loginLoadingTimer !== null) window.clearTimeout(this.loginLoadingTimer);
+        this.loginLoadingTimer = window.setTimeout(() => {
+            this.loginLoadingTimer = null;
+            if (this.routeLoading) return;
+            this.loginLoadingUntil = 0;
+            this.showPageSkeleton.set(false);
+        }, delay);
     }
 
     @HostListener('window:online')
@@ -174,6 +201,9 @@ export class App {
     }
 
     protected onLogin(user: { name: string; role: string }): void {
+        this.loginLoadingUntil = Date.now() + 600;
+        this.showPageSkeleton.set(true);
+        this.scheduleLoginLoadingFinish(600);
         this.toast.success(`Bem-vindo, ${user.name}!`, user.role);
         this.fleetService.start();
     }

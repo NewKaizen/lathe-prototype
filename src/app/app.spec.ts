@@ -45,4 +45,18 @@ describe('App', () => {
         await fixture.whenStable();
         expect(router.url).toBe('/login');
     });
+
+    it('shows the page loading skeleton immediately after a successful login', () => {
+        const fixture = TestBed.createComponent(App);
+        const fleetService = TestBed.inject(FleetService);
+        vi.spyOn(fleetService, 'start').mockImplementation(() => undefined);
+
+        const app = fixture.componentInstance as unknown as {
+            onLogin: (user: { name: string; role: string }) => void;
+        };
+        app.onLogin({ name: 'Administrador', role: 'Administrador do Sistema' });
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('app-page-skeleton')).not.toBeNull();
+    });
 });
