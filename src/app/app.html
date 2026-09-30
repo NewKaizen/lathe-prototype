@@ -41,6 +41,21 @@
 <app-toast-container />
 } @if (showPageSkeleton()) {
 <app-page-skeleton />
+} @if (showLogoutLoading()) {
+<div
+    class="fixed inset-0 z-[90] grid place-items-center bg-background/95 p-6 backdrop-blur-sm"
+    role="status"
+    aria-live="polite"
+    aria-label="Saindo da conta"
+>
+    <div class="flex flex-col items-center gap-4 text-center">
+        <span
+            class="h-12 w-12 animate-spin rounded-full border-[3px] border-primary/25 border-t-primary"
+            aria-hidden="true"
+        ></span>
+        <p class="text-base font-medium text-foreground">Saindo...</p>
+    </div>
+</div>
 } @if (!isOnline()) {
 <div
     class="fixed inset-0 z-[80] grid place-items-center bg-background/80 p-5 backdrop-blur-sm"

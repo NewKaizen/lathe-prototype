@@ -59,4 +59,19 @@ describe('App', () => {
 
         expect(fixture.nativeElement.querySelector('app-page-skeleton')).not.toBeNull();
     });
+
+    it('shows a centered exit spinner and message while logging out', () => {
+        const fixture = TestBed.createComponent(App);
+        const fleetService = TestBed.inject(FleetService);
+        vi.spyOn(fleetService, 'stop').mockImplementation(() => undefined);
+
+        const app = fixture.componentInstance as unknown as { onLogout: () => void };
+        app.onLogout();
+        fixture.detectChanges();
+
+        const feedback = fixture.nativeElement.querySelector('[aria-label="Saindo da conta"]');
+        expect(feedback).not.toBeNull();
+        expect(feedback.textContent).toContain('Saindo...');
+        expect(feedback.querySelector('.animate-spin')).not.toBeNull();
+    });
 });

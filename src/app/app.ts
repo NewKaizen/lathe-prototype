@@ -45,9 +45,12 @@ export class App {
     protected isOnline = signal(typeof navigator === 'undefined' || navigator.onLine);
     protected systemError = signal<string | null>(null);
     protected showPageSkeleton = signal(false);
+    protected showLogoutLoading = signal(false);
     private routeLoadingTimer: number | null = null;
     private loginLoadingTimer: number | null = null;
     private loginLoadingUntil = 0;
+    private logoutLoadingTimer: number | null = null;
+    private logoutLoadingUntil = 0;
     private routeLoading = false;
     /** Fase 2.3: painel global de Ajuda — substitui "Central de Comandos"/"Dicas" como itens de nav. */
     protected isHelpOpen = signal(false);
@@ -93,6 +96,7 @@ export class App {
             routerEventsSub.unsubscribe();
             this.finishRouteLoading();
             if (this.loginLoadingTimer !== null) window.clearTimeout(this.loginLoadingTimer);
+            if (this.logoutLoadingTimer !== null) window.clearTimeout(this.logoutLoadingTimer);
         });
 
         // Sincroniza signals -> URL (signals sao a fonte de verdade; URL reflete).
@@ -136,6 +140,7 @@ export class App {
         if (this.routeLoadingTimer !== null) window.clearTimeout(this.routeLoadingTimer);
         this.routeLoadingTimer = null;
         this.routeLoading = false;
+        this.finishLogoutLoading();
         const remainingLoginLoading = this.loginLoadingUntil - Date.now();
         if (remainingLoginLoading > 0) {
             this.showPageSkeleton.set(true);
@@ -154,6 +159,25 @@ export class App {
             this.loginLoadingUntil = 0;
             this.showPageSkeleton.set(false);
         }, delay);
+    }
+
+    private scheduleLogoutLoadingFinish(delay: number): void {
+        if (this.logoutLoadingTimer !== null) window.clearTimeout(this.logoutLoadingTimer);
+        this.logoutLoadingTimer = window.setTimeout(() => {
+            this.logoutLoadingTimer = null;
+            this.finishLogoutLoading();
+        }, delay);
+    }
+
+    private finishLogoutLoading(): void {
+        if (!this.logoutLoadingUntil || this.routeLoading) return;
+        const remaining = this.logoutLoadingUntil - Date.now();
+        if (remaining > 0) {
+            this.scheduleLogoutLoadingFinish(remaining);
+            return;
+        }
+        this.logoutLoadingUntil = 0;
+        this.showLogoutLoading.set(false);
     }
 
     @HostListener('window:online')
@@ -201,14 +225,17 @@ export class App {
     }
 
     protected onLogin(user: { name: string; role: string }): void {
-        this.loginLoadingUntil = Date.now() + 600;
+        this.loginLoadingUntil = Date.now() + 850;
         this.showPageSkeleton.set(true);
-        this.scheduleLoginLoadingFinish(600);
+        this.scheduleLoginLoadingFinish(850);
         this.toast.success(`Bem-vindo, ${user.name}!`, user.role);
         this.fleetService.start();
     }
 
     protected onLogout(): void {
+        this.logoutLoadingUntil = Date.now() + 1000;
+        this.showLogoutLoading.set(true);
+        this.scheduleLogoutLoadingFinish(1000);
         this.fleetService.stop();
         this.auth.logout();
         this.fleetService.selectedLatheId.set(null);
