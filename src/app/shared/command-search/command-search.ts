@@ -1,5 +1,6 @@
+import { Combobox, ComboboxPopup, ComboboxWidget } from '@angular/aria/combobox';
+import { Listbox, Option } from '@angular/aria/listbox';
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { LatheData } from '../../core/models/fleet.model';
 import { COMMAND_ACTIONS, COMMAND_PAGES } from '../../core/lib/commands';
 import { STATUS_META } from '../../core/lib/status';
@@ -40,7 +41,7 @@ function textMatches(term: string, label: string, keywords: string[]): boolean {
 @Component({
     selector: 'app-command-search',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormsModule, Icon],
+    imports: [Combobox, ComboboxPopup, ComboboxWidget, Listbox, Option, Icon],
     templateUrl: './command-search.html',
 })
 export class CommandSearch {
@@ -50,8 +51,7 @@ export class CommandSearch {
     readonly openReference = output<void>();
 
     protected query = signal('');
-    protected activeIndex = signal(0);
-    protected isFocused = signal(false);
+    protected expanded = signal(false);
 
     protected STATUS_META = STATUS_META;
 
@@ -110,44 +110,23 @@ export class CommandSearch {
 
     protected onInput(value: string): void {
         this.query.set(value);
-        this.activeIndex.set(0);
+        this.expanded.set(value.trim().length > 0);
     }
 
-    protected onFocus(): void {
-        this.isFocused.set(true);
-    }
-
-    protected onBlur(): void {
-        setTimeout(() => this.isFocused.set(false), 150);
-    }
-
-    protected onKeydown(event: KeyboardEvent): void {
-        const list = this.results();
-        if (event.key === 'ArrowDown') {
-            event.preventDefault();
-            if (list.length) this.activeIndex.set((this.activeIndex() + 1) % list.length);
-        } else if (event.key === 'ArrowUp') {
-            event.preventDefault();
-            if (list.length) this.activeIndex.set((this.activeIndex() - 1 + list.length) % list.length);
-        } else if (event.key === 'Enter') {
-            event.preventDefault();
-            const chosen = list[this.activeIndex()];
-            if (chosen) this.pick(chosen);
-        } else if (event.key === 'Escape') {
-            (event.target as HTMLInputElement).blur();
-            this.query.set('');
-        }
+    protected onSelection(keys: string[]): void {
+        const chosen = this.results().find((result) => result.key === keys[0]);
+        if (chosen) this.pick(chosen);
     }
 
     protected pick(result: SearchResult): void {
         this.select.emit(result.selection);
         this.query.set('');
-        this.activeIndex.set(0);
+        this.expanded.set(false);
     }
 
     protected clear(): void {
         this.query.set('');
-        this.activeIndex.set(0);
+        this.expanded.set(false);
     }
 
     protected kindLabel(kind: SearchResult['kind']): string {

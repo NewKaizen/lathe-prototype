@@ -7,16 +7,13 @@
         />
         <input
             type="text"
-            [ngModel]="query()"
-            (ngModelChange)="onInput($event)"
-            (keydown)="onKeydown($event)"
-            (focus)="onFocus()"
-            (blur)="onBlur()"
+            ngCombobox
+            #combobox="ngCombobox"
+            [value]="query()"
+            (valueChange)="onInput($event)"
+            [(expanded)]="expanded"
             placeholder="Pesquisar páginas, ações, tornos... (use : , &gt; ou &lt;)"
             aria-label="Busca interna"
-            aria-autocomplete="list"
-            role="combobox"
-            [attr.aria-expanded]="hasQuery() && isFocused()"
             class="w-full h-14 pl-12 pr-[4.75rem] bg-card border border-border focus:outline-2 focus:outline-[var(--focus)] outline-offset-[-2px] text-[15px] text-foreground placeholder:text-muted-foreground"
         />
         <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -42,32 +39,45 @@
         </div>
     </div>
 
-    @if (hasQuery() && isFocused()) {
-    <div class="absolute z-30 mt-1.5 w-full tile max-h-[22rem] overflow-y-auto custom-scrollbar" role="listbox">
-        @if (results().length === 0) {
-        <div class="px-4 py-6 text-center">
-            <p class="text-[13px] text-muted-foreground">
-                Nada encontrado. Tente outro termo ou use <span class="font-mono">&gt;</span>,
-                <span class="font-mono">:</span> ou <span class="font-mono">&lt;</span>.
-            </p>
-        </div>
-        } @else { @for (r of results(); track r.key; let i = $index) {
-        <button
-            type="button"
-            role="option"
-            (mousedown)="pick(r)"
-            [attr.aria-selected]="i === activeIndex()"
-            class="w-full flex items-center gap-3 px-4 py-3 text-left border-b border-border/40 last:border-b-0 transition-colors"
-            [class.bg-secondary]="i === activeIndex()"
+    <ng-template ngComboboxPopup [combobox]="combobox">
+        <div
+            class="absolute z-30 mt-1.5 w-full tile max-h-[22rem] overflow-y-auto custom-scrollbar"
+            ngComboboxWidget
+            ngListbox
+            #listbox="ngListbox"
+            aria-label="Resultados da busca"
+            focusMode="activedescendant"
+            selectionMode="explicit"
+            [wrap]="true"
+            [activeDescendant]="listbox.activeDescendant()"
+            [value]="[]"
+            (valueChange)="onSelection($event)"
         >
-            <app-icon [name]="r.icon" [size]="16" [class]="r.iconClass + ' shrink-0'" />
-            <div class="flex-1 min-w-0">
-                <p class="text-[13px] font-semibold text-foreground truncate">{{ r.title }}</p>
-                <p class="text-[11px] text-muted-foreground truncate">{{ r.subtitle }}</p>
+            @if (results().length === 0) {
+            <div role="status" class="px-4 py-6 text-center">
+                <p class="text-[13px] text-muted-foreground">
+                    Nada encontrado. Tente outro termo ou use <span class="font-mono">&gt;</span>,
+                    <span class="font-mono">:</span> ou <span class="font-mono">&lt;</span>.
+                </p>
             </div>
-            <span class="text-overline text-muted-foreground/70 shrink-0">{{ kindLabel(r.kind) }}</span>
-        </button>
-        } }
-    </div>
-    }
+            } @else { @for (r of results(); track r.key) {
+            <button
+                type="button"
+                ngOption
+                #option="ngOption"
+                [value]="r.key"
+                [label]="r.title"
+                class="w-full flex items-center gap-3 px-4 py-3 text-left border-b border-border/40 last:border-b-0 transition-colors"
+                [class.bg-secondary]="option.active()"
+            >
+                <app-icon [name]="r.icon" [size]="16" [class]="r.iconClass + ' shrink-0'" />
+                <div class="flex-1 min-w-0">
+                    <p class="text-[13px] font-semibold text-foreground truncate">{{ r.title }}</p>
+                    <p class="text-[11px] text-muted-foreground truncate">{{ r.subtitle }}</p>
+                </div>
+                <span class="text-overline text-muted-foreground/70 shrink-0">{{ kindLabel(r.kind) }}</span>
+            </button>
+            } }
+        </div>
+    </ng-template>
 </div>

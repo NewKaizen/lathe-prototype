@@ -3,6 +3,7 @@
     <div class="absolute inset-0 modal-overlay-scrim" aria-hidden="true" (click)="close.emit()"></div>
 
     <div
+        ngTabs
         role="dialog"
         aria-modal="true"
         aria-labelledby="settings-title"
@@ -20,9 +21,17 @@
                 </button>
             </div>
 
-            <div class="flex gap-4 mt-6">
+            <div
+                ngTabList
+                selectionMode="follow"
+                [(selectedTab)]="activeTab"
+                aria-label="Configurações"
+                class="flex gap-4 mt-6"
+            >
                 <button
-                    (click)="activeTab.set('account')"
+                    ngTab
+                    value="account"
+                    type="button"
                     class="pb-3 text-[14px] font-semibold transition-colors border-b-2"
                     [class.border-primary]="activeTab() === 'account'"
                     [class.text-foreground]="activeTab() === 'account'"
@@ -32,7 +41,9 @@
                     Conta
                 </button>
                 <button
-                    (click)="activeTab.set('accessibility')"
+                    ngTab
+                    value="accessibility"
+                    type="button"
                     class="pb-3 text-[14px] font-semibold transition-colors border-b-2"
                     [class.border-primary]="activeTab() === 'accessibility'"
                     [class.text-foreground]="activeTab() === 'accessibility'"
@@ -45,164 +56,169 @@
         </div>
 
         <div class="p-6">
-            @if (activeTab() === 'account') {
-            <div class="space-y-6">
-                <div class="flex items-center gap-4 p-4 bg-secondary/50 border border-border/50">
-                    <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                        <app-icon name="user" [size]="32" class="text-primary" />
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-lg">{{ userName() }}</h3>
-                        <p class="text-muted-foreground text-sm">{{ userRole() }}</p>
-                    </div>
-                </div>
+            <div ngTabPanel value="account" [hidden]="activeTab() !== 'account'">
+                <ng-template ngTabContent>
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-4 p-4 bg-secondary/50 border border-border/50">
+                            <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                                <app-icon name="user" [size]="32" class="text-primary" />
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg">{{ userName() }}</h3>
+                                <p class="text-muted-foreground text-sm">{{ userRole() }}</p>
+                            </div>
+                        </div>
 
-                <div class="space-y-4">
-                    <h4 class="text-[12px] font-bold uppercase tracking-widest text-muted-foreground">
-                        Preferências do Sistema
-                    </h4>
-                    <div class="p-4 border border-border bg-card flex justify-between items-center">
-                        <div>
-                            <p class="font-semibold text-sm">Notificações por Email</p>
-                            <p class="text-muted-foreground text-[13px] mt-0.5">
-                                Receber relatórios de manutenção críticos.
+                        <div class="space-y-4">
+                            <h4 class="text-[12px] font-bold uppercase tracking-widest text-muted-foreground">
+                                Preferências do Sistema
+                            </h4>
+                            <div class="p-4 border border-border bg-card flex justify-between items-center">
+                                <div>
+                                    <p class="font-semibold text-sm">Notificações por Email</p>
+                                    <p class="text-muted-foreground text-[13px] mt-0.5">
+                                        Receber relatórios de manutenção críticos.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    [attr.aria-checked]="settings.emailNotifications()"
+                                    aria-label="Notificações por Email"
+                                    (click)="toggleEmailNotifications()"
+                                    class="w-10 h-6 rounded-full relative shrink-0 transition-colors"
+                                    [class.bg-primary]="settings.emailNotifications()"
+                                    [class.bg-secondary]="!settings.emailNotifications()"
+                                >
+                                    <div
+                                        class="w-4 h-4 bg-white rounded-full absolute top-1 transition-all"
+                                        [class.right-1]="settings.emailNotifications()"
+                                        [class.left-1]="!settings.emailNotifications()"
+                                    ></div>
+                                </button>
+                            </div>
+
+                            <div class="p-4 border border-border bg-card">
+                                <p class="font-semibold text-sm mb-1">Alertas no sino de notificações</p>
+                                <p class="text-muted-foreground text-[13px] mb-3">
+                                    Escolha quais alertas aparecem no painel de notificações.
+                                </p>
+                                <div class="flex p-1 bg-secondary">
+                                    <button
+                                        type="button"
+                                        (click)="setNotificationFilter('all')"
+                                        class="flex-1 py-2 text-[13px] font-medium transition-all"
+                                        [class.bg-background]="settings.notificationFilter() === 'all'"
+                                        [class.text-foreground]="settings.notificationFilter() === 'all'"
+                                        [class.text-muted-foreground]="settings.notificationFilter() !== 'all'"
+                                    >
+                                        Todos os alertas
+                                    </button>
+                                    <button
+                                        type="button"
+                                        (click)="setNotificationFilter('critical-only')"
+                                        class="flex-1 py-2 text-[13px] font-medium transition-all"
+                                        [class.bg-background]="settings.notificationFilter() === 'critical-only'"
+                                        [class.text-foreground]="settings.notificationFilter() === 'critical-only'"
+                                        [class.text-muted-foreground]="settings.notificationFilter() !== 'critical-only'"
+                                    >
+                                        Só críticos
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </ng-template>
+            </div>
+            <div ngTabPanel value="accessibility" [hidden]="activeTab() !== 'accessibility'">
+                <ng-template ngTabContent>
+                    <div class="space-y-8 animate-fade-in">
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-2">
+                                <app-icon name="type" [size]="16" class="text-primary" />
+                                <h4 class="font-semibold text-[15px]">Tamanho da Fonte</h4>
+                            </div>
+                            <div class="flex p-1 bg-secondary">
+                                @for (size of fontSizes; track size) {
+                                <button
+                                    (click)="setFontSize(size)"
+                                    class="flex-1 py-2 text-[13px] font-medium transition-all"
+                                    [class.bg-background]="settings.fontSize() === size"
+                                    [class.text-foreground]="settings.fontSize() === size"
+                                    [class.text-muted-foreground]="settings.fontSize() !== size"
+                                >
+                                    {{ size === 'small' ? 'Pequeno' : size === 'large' ? 'Grande' : 'Padrão' }}
+                                </button>
+                                }
+                            </div>
+                            <p class="text-[12px] text-muted-foreground">
+                                O ajuste redimensiona toda a interface proporcionalmente.
                             </p>
                         </div>
-                        <button
-                            type="button"
-                            role="switch"
-                            [attr.aria-checked]="settings.emailNotifications()"
-                            aria-label="Notificações por Email"
-                            (click)="toggleEmailNotifications()"
-                            class="w-10 h-6 rounded-full relative shrink-0 transition-colors"
-                            [class.bg-primary]="settings.emailNotifications()"
-                            [class.bg-secondary]="!settings.emailNotifications()"
-                        >
-                            <div
-                                class="w-4 h-4 bg-white rounded-full absolute top-1 transition-all"
-                                [class.right-1]="settings.emailNotifications()"
-                                [class.left-1]="!settings.emailNotifications()"
-                            ></div>
-                        </button>
-                    </div>
 
-                    <div class="p-4 border border-border bg-card">
-                        <p class="font-semibold text-sm mb-1">Alertas no sino de notificações</p>
-                        <p class="text-muted-foreground text-[13px] mb-3">
-                            Escolha quais alertas aparecem no painel de notificações.
-                        </p>
-                        <div class="flex p-1 bg-secondary">
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-2">
+                                <app-icon name="settings-2" [size]="16" class="text-primary" />
+                                <h4 class="font-semibold text-[15px]">Legibilidade</h4>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <button
+                                    (click)="setFontFamily('default')"
+                                    class="p-4 border-2 text-left transition-all"
+                                    [class.border-primary]="settings.fontFamily() === 'default'"
+                                    [class.border-border]="settings.fontFamily() !== 'default'"
+                                >
+                                    <p class="font-semibold text-[14px] mb-1">Padrão</p>
+                                    <p class="text-[12px] text-muted-foreground leading-relaxed">
+                                        IBM Plex Sans (Design System)
+                                    </p>
+                                </button>
+                                <button
+                                    (click)="setFontFamily('dyslexia')"
+                                    class="p-4 border-2 text-left transition-all"
+                                    [class.border-primary]="settings.fontFamily() === 'dyslexia'"
+                                    [class.border-border]="settings.fontFamily() !== 'dyslexia'"
+                                >
+                                    <p
+                                        class="font-semibold text-[14px] mb-1"
+                                        style="font-family: 'Atkinson Hyperlegible', 'Comic Sans MS', sans-serif"
+                                    >
+                                        Alta Legibilidade
+                                    </p>
+                                    <p class="text-[12px] text-muted-foreground leading-relaxed">
+                                        Atkinson Hyperlegible — alto contraste entre caracteres
+                                    </p>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="p-4 border border-border bg-card flex justify-between items-center">
+                            <div>
+                                <p class="font-semibold text-sm">Reduzir Animações</p>
+                                <p class="text-muted-foreground text-[13px] mt-0.5">
+                                    Desliga transições e efeitos de pulso na interface.
+                                </p>
+                            </div>
                             <button
                                 type="button"
-                                (click)="setNotificationFilter('all')"
-                                class="flex-1 py-2 text-[13px] font-medium transition-all"
-                                [class.bg-background]="settings.notificationFilter() === 'all'"
-                                [class.text-foreground]="settings.notificationFilter() === 'all'"
-                                [class.text-muted-foreground]="settings.notificationFilter() !== 'all'"
+                                role="switch"
+                                [attr.aria-checked]="settings.reduceMotion()"
+                                aria-label="Reduzir Animações"
+                                (click)="toggleReduceMotion()"
+                                class="w-10 h-6 rounded-full relative shrink-0 transition-colors"
+                                [class.bg-primary]="settings.reduceMotion()"
+                                [class.bg-secondary]="!settings.reduceMotion()"
                             >
-                                Todos os alertas
-                            </button>
-                            <button
-                                type="button"
-                                (click)="setNotificationFilter('critical-only')"
-                                class="flex-1 py-2 text-[13px] font-medium transition-all"
-                                [class.bg-background]="settings.notificationFilter() === 'critical-only'"
-                                [class.text-foreground]="settings.notificationFilter() === 'critical-only'"
-                                [class.text-muted-foreground]="settings.notificationFilter() !== 'critical-only'"
-                            >
-                                Só críticos
+                                <div
+                                    class="w-4 h-4 bg-white rounded-full absolute top-1 transition-all"
+                                    [class.right-1]="settings.reduceMotion()"
+                                    [class.left-1]="!settings.reduceMotion()"
+                                ></div>
                             </button>
                         </div>
                     </div>
-                </div>
+                </ng-template>
             </div>
-            } @if (activeTab() === 'accessibility') {
-            <div class="space-y-8 animate-fade-in">
-                <div class="space-y-3">
-                    <div class="flex items-center gap-2">
-                        <app-icon name="type" [size]="16" class="text-primary" />
-                        <h4 class="font-semibold text-[15px]">Tamanho da Fonte</h4>
-                    </div>
-                    <div class="flex p-1 bg-secondary">
-                        @for (size of fontSizes; track size) {
-                        <button
-                            (click)="setFontSize(size)"
-                            class="flex-1 py-2 text-[13px] font-medium transition-all"
-                            [class.bg-background]="settings.fontSize() === size"
-                            [class.text-foreground]="settings.fontSize() === size"
-                            [class.text-muted-foreground]="settings.fontSize() !== size"
-                        >
-                            {{ size === 'small' ? 'Pequeno' : size === 'large' ? 'Grande' : 'Padrão' }}
-                        </button>
-                        }
-                    </div>
-                    <p class="text-[12px] text-muted-foreground">
-                        O ajuste redimensiona toda a interface proporcionalmente.
-                    </p>
-                </div>
-
-                <div class="space-y-3">
-                    <div class="flex items-center gap-2">
-                        <app-icon name="settings-2" [size]="16" class="text-primary" />
-                        <h4 class="font-semibold text-[15px]">Legibilidade</h4>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <button
-                            (click)="setFontFamily('default')"
-                            class="p-4 border-2 text-left transition-all"
-                            [class.border-primary]="settings.fontFamily() === 'default'"
-                            [class.border-border]="settings.fontFamily() !== 'default'"
-                        >
-                            <p class="font-semibold text-[14px] mb-1">Padrão</p>
-                            <p class="text-[12px] text-muted-foreground leading-relaxed">
-                                IBM Plex Sans (Design System)
-                            </p>
-                        </button>
-                        <button
-                            (click)="setFontFamily('dyslexia')"
-                            class="p-4 border-2 text-left transition-all"
-                            [class.border-primary]="settings.fontFamily() === 'dyslexia'"
-                            [class.border-border]="settings.fontFamily() !== 'dyslexia'"
-                        >
-                            <p
-                                class="font-semibold text-[14px] mb-1"
-                                style="font-family: 'Atkinson Hyperlegible', 'Comic Sans MS', sans-serif"
-                            >
-                                Alta Legibilidade
-                            </p>
-                            <p class="text-[12px] text-muted-foreground leading-relaxed">
-                                Atkinson Hyperlegible — alto contraste entre caracteres
-                            </p>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="p-4 border border-border bg-card flex justify-between items-center">
-                    <div>
-                        <p class="font-semibold text-sm">Reduzir Animações</p>
-                        <p class="text-muted-foreground text-[13px] mt-0.5">
-                            Desliga transições e efeitos de pulso na interface.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        role="switch"
-                        [attr.aria-checked]="settings.reduceMotion()"
-                        aria-label="Reduzir Animações"
-                        (click)="toggleReduceMotion()"
-                        class="w-10 h-6 rounded-full relative shrink-0 transition-colors"
-                        [class.bg-primary]="settings.reduceMotion()"
-                        [class.bg-secondary]="!settings.reduceMotion()"
-                    >
-                        <div
-                            class="w-4 h-4 bg-white rounded-full absolute top-1 transition-all"
-                            [class.right-1]="settings.reduceMotion()"
-                            [class.left-1]="!settings.reduceMotion()"
-                        ></div>
-                    </button>
-                </div>
-            </div>
-            }
         </div>
     </div>
 </div>

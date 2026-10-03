@@ -1,3 +1,4 @@
+import { Tabs, TabList, Tab, TabPanel, TabContent } from '@angular/aria/tabs';
 import {
     ChangeDetectionStrategy,
     Component,
@@ -15,7 +16,7 @@ import { Icon } from '../../shared/icon/icon';
 @Component({
     selector: 'app-user-settings-modal',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [Icon],
+    imports: [Tabs, TabList, Tab, TabPanel, TabContent, Icon],
     templateUrl: './user-settings-modal.html',
 })
 export class UserSettingsModal {
@@ -26,7 +27,7 @@ export class UserSettingsModal {
     protected settings = inject(SettingsService);
     private auth = inject(AuthService);
 
-    protected activeTab = signal<'account' | 'accessibility'>('accessibility');
+    protected activeTab = signal<string | undefined>('accessibility');
     protected fontSizes: FontSize[] = ['small', 'default', 'large'];
     protected userRole = computed(() => this.auth.user()?.role ?? '');
 

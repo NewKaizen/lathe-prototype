@@ -1,3 +1,9 @@
+import { Toolbar, ToolbarWidget, ToolbarWidgetGroup } from '@angular/aria/toolbar';
+import { Menu, MenuItem, MenuTrigger, MenuContent } from '@angular/aria/menu';
+import { createFleetMaintenanceState } from './state/fleet-maintenance-state';
+import { Tabs, TabList, Tab, TabPanel, TabContent } from '@angular/aria/tabs';
+import { createFleetListingState } from './state/fleet-listing-state';
+import { createFleetInsights } from './state/fleet-insights';
 import {
     ChangeDetectionStrategy,
     Component,
@@ -8,23 +14,13 @@ import {
     input,
     output,
     signal,
+    viewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import {
-    LatheData,
-    LatheStatus,
-    MaintenanceData,
-    ScheduledMaintenance,
-    TelemetryHistory,
-} from '../../core/models/fleet.model';
+import { LatheData, LatheStatus, MaintenanceData, TelemetryHistory } from '../../core/models/fleet.model';
 import { STATUS_META } from '../../core/lib/status';
-import { parseDMY, formatISODate, parseISODateLocal, typeLabel } from '../../core/lib/format';
-import { estimateFleetEnergy } from '../../core/lib/energy';
-import { normalizeSearch } from '../../core/lib/text';
-import { maintenanceHistoryFor } from '../../core/data/maintenance-data';
 import { FleetLayoutMode, SettingsService } from '../../core/services/settings.service';
 import { FleetService } from '../../core/services/fleet.service';
-import { ToastService } from '../../core/services/toast.service';
 import { UserSettingsModal } from '../user-settings-modal/user-settings-modal';
 import { MaintenanceScheduler } from '../maintenance-scheduler/maintenance-scheduler';
 import { Icon } from '../../shared/icon/icon';
@@ -41,7 +37,7 @@ import { FleetCostDetailView } from './views/fleet-cost-detail-view/fleet-cost-d
 import { FleetCompareView } from './views/fleet-compare-view/fleet-compare-view';
 import { FleetMachineDetailView } from './views/fleet-machine-detail-view/fleet-machine-detail-view';
 import { NotificationsBell } from '../notifications-panel/notifications-panel';
-import { DEFAULT_FLEET_NAV, FleetNav, FleetTab, FleetView, ReportsTab } from '../../core/models/fleet-nav';
+import { DEFAULT_FLEET_NAV, FleetNav, FleetTab, FleetView } from '../../core/models/fleet-nav';
 
 /** Nav principal — máx. 5 itens (Fase 2.2). "Resumo" foi absorvido por "Início"
  *  (app-fleet-home-view já embute app-fleet-overview-view) e "Energia & Custos"
@@ -66,15 +62,9 @@ const NAV_ITEMS: { id: FleetView; label: string; icon: string }[] = [
     { id: 'compare', label: 'Comparar Máquinas', icon: 'git-compare-arrows' },
 ];
 
-const STATUS_ORDER: Record<LatheStatus, number> = { critical: 0, warning: 1, maintenance: 2, operational: 3 };
-
 /** Altura fixa da topbar — usada pra encostar a sidebar embaixo dela, em vez de atrás.
  *  Corresponde a py-4 (32px) + input h-14 (56px) + borda (1px). */
 const TOPBAR_HEIGHT_PX = 89;
-
-/** Fase 3.1: tamanho de página da listagem — só se aplica aos modos grade/lista
- *  (o modo agrupado por linha já segmenta naturalmente, sem paginar). */
-const PAGE_SIZE = 12;
 
 const FLEET_TABS: { id: FleetTab; label: string }[] = [
     { id: 'listagem', label: 'Listagem' },
@@ -89,10 +79,6 @@ const LAYOUT_MODES: { id: FleetLayoutMode; label: string; icon: string }[] = [
     { id: 'grid', label: 'Cards', icon: 'layout-grid' },
     { id: 'list', label: 'Lista', icon: 'list' },
 ];
-
-function sortLathes(lathes: LatheData[]): LatheData[] {
-    return [...lathes].sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || a.id.localeCompare(b.id));
-}
 
 const VIEW_TITLES: Record<FleetView, string> = {
     home: 'Início',
@@ -109,23 +95,22 @@ const VIEW_SUBTITLES: Partial<Record<FleetView, string>> = {
     compare: 'Compare até 4 tornos lado a lado em métricas operacionais.',
 };
 
-function groupBySector(lathes: LatheData[]): [string, LatheData[]][] {
-    const map = new Map<string, LatheData[]>();
-    for (const l of lathes) {
-        const key = l.sector || 'Sem linha';
-        if (!map.has(key)) map.set(key, []);
-        map.get(key)!.push(l);
-    }
-    const collator = new Intl.Collator('pt-BR', { numeric: true });
-    return [...map.entries()]
-        .map<[string, LatheData[]]>(([sector, group]) => [sector, sortLathes(group)])
-        .sort((a, b) => collator.compare(a[0], b[0]));
-}
-
 @Component({
     selector: 'app-fleet-selector',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        Toolbar,
+        ToolbarWidget,
+        ToolbarWidgetGroup,
+        Menu,
+        MenuItem,
+        MenuTrigger,
+        MenuContent,
+        Tabs,
+        TabList,
+        Tab,
+        TabPanel,
+        TabContent,
         FormsModule,
         UserSettingsModal,
         Icon,
@@ -157,9 +142,7 @@ export class FleetSelector {
     readonly logout = output<void>();
     /** Abre o painel global de Ajuda (renderizado em app.html, fora do escopo desta view). */
     readonly openHelp = output<void>();
-    /** Fase 3.1: página da listagem sobe para o app-root, que sobrevive à seleção de uma
-     *  máquina — FleetSelector é destruído nesse momento (@if em app.html), então o estado
-     *  não pode viver só aqui se precisa ser preservado ao voltar. */
+    /** Listing page is owned by the route shell, preserving it across machine selection. */
     readonly page = input<number>(1);
     readonly pageChange = output<number>();
 
@@ -173,8 +156,9 @@ export class FleetSelector {
     readonly deselect = output<void>();
 
     private settings = inject(SettingsService);
-    private toast = inject(ToastService);
     private fleetService = inject(FleetService);
+    protected readonly insights = createFleetInsights(this.lathes, this.tick, (id) => this.fleetService.historyFor(id));
+    protected readonly listing = createFleetListingState(this.lathes, this.page, this.insights.urgentAlerts);
 
     /** Id (não o objeto) da máquina selecionada — o objeto `selectedLathe()` muda de referência
      *  a cada tick de telemetria (o array `fleet` é substituído), mas um `computed` só notifica
@@ -204,14 +188,12 @@ export class FleetSelector {
     protected statusFilters = STATUS_FILTERS;
     protected layoutModes = LAYOUT_MODES;
     protected reportsTab = computed(() => this.nav().reportsTab);
-    protected search = signal('');
-    protected filter = signal<FilterStatus>('all');
     protected isSettingsOpen = signal(false);
     /** Popover de perfil na topbar de Relatórios (Configurações/Sair) — substitui os ícones que
      *  saíram do rodapé da sidebar nesse layout. */
-    protected isProfileMenuOpen = signal(false);
+    private readonly profileTrigger = viewChild(MenuTrigger);
+    protected readonly isProfileMenuOpen = computed(() => this.profileTrigger()?.expanded() ?? false);
     protected isSidebarCollapsed = signal(false);
-    protected collapsedSectors = signal<Set<string>>(new Set());
     protected layoutMode = this.settings.fleetLayoutMode;
 
     protected selectedReportKey = computed(() => this.nav().reportKey);
@@ -231,69 +213,27 @@ export class FleetSelector {
         this.navChange.emit({ ...this.nav(), ...patch });
     }
 
-    protected filtered = computed(() => {
-        const s = normalizeSearch(this.search());
-        const f = this.filter();
-        return this.lathes().filter((l) => {
-            const matchSearch =
-                normalizeSearch(l.name).includes(s) ||
-                normalizeSearch(l.id).includes(s) ||
-                normalizeSearch(l.model).includes(s) ||
-                normalizeSearch(l.sector).includes(s);
-            const matchFilter = f === 'all' || l.status === f;
-            return matchSearch && matchFilter;
-        });
-    });
-
-    protected grouped = computed(() => groupBySector(this.filtered()));
-    protected flatSorted = computed(() => sortLathes(this.filtered()));
-    protected isFiltering = computed(() => this.search().trim() !== '' || this.filter() !== 'all');
-    protected isSearching = computed(() => this.search().trim() !== '');
-
-    /** Fase 2.1 (redesenho): a busca compartilhada da Frota também filtra Alertas e Planta D —
-     *  antes cada aba era um mini-app isolado sem contexto compartilhado com as outras. */
-    protected urgentAlertsFiltered = computed(() => {
-        const s = normalizeSearch(this.search());
-        if (!s) return this.urgentAlerts();
-        return this.urgentAlerts().filter(
-            (l) =>
-                normalizeSearch(l.name).includes(s) ||
-                normalizeSearch(l.id).includes(s) ||
-                normalizeSearch(l.model).includes(s) ||
-                normalizeSearch(l.sector).includes(s),
-        );
-    });
-
-    protected sectorCount = computed(() => new Set(this.lathes().map((l) => l.sector)).size);
-
-    protected showFleetTab(tab: FleetTab): void {
-        this.emitNav({ view: 'fleet', tab });
+    protected showFleetTab(tab: string | undefined): void {
+        if (!this.fleetTabs.some((item) => item.id === tab)) return;
+        this.emitNav({ view: 'fleet', tab: tab as FleetTab });
     }
 
-    /** Fase 3.1: paginação (12/página) — só usada nos modos grade/lista de fleet-listing-view. */
-    protected totalPages = computed(() => Math.max(1, Math.ceil(this.filtered().length / PAGE_SIZE)));
-    protected currentPage = computed(() => Math.min(Math.max(1, this.page()), this.totalPages()));
-    protected paginatedFlatSorted = computed(() => {
-        const all = this.flatSorted();
-        const start = (this.currentPage() - 1) * PAGE_SIZE;
-        return all.slice(start, start + PAGE_SIZE);
-    });
-
-    /** Planta D — mapa esquemático por setor. Fase 2.1 (redesenho): agora respeita a mesma busca
-     *  compartilhada da Frota, em vez de ignorá-la como um mini-app isolado. */
-    protected plantSectors = computed(() => groupBySector(this.filtered()));
+    protected onLayoutSelection(values: string[]): void {
+        const mode = values[0];
+        if (mode === 'grouped' || mode === 'grid' || mode === 'list') this.setLayoutMode(mode);
+    }
 
     protected setLayoutMode(mode: FleetLayoutMode): void {
         this.settings.setFleetLayoutMode(mode);
     }
 
     protected onSearchChange(value: string): void {
-        this.search.set(value);
+        this.listing.search.set(value);
         this.pageChange.emit(1);
     }
 
     protected onFilterChange(value: FilterStatus): void {
-        this.filter.set(value);
+        this.listing.filter.set(value);
         this.pageChange.emit(1);
     }
 
@@ -357,12 +297,13 @@ export class FleetSelector {
         this.emitNav({ view: 'cost-detail', costMachineId: latheId });
     }
 
-    protected showReportsTab(tab: ReportsTab): void {
+    protected showReportsTab(tab: string | undefined): void {
+        if (tab !== 'relatorios' && tab !== 'energia') return;
         this.emitNav({ view: 'reports', reportsTab: tab });
     }
 
     protected goToStatus(status: LatheStatus): void {
-        this.filter.set(status);
+        this.listing.filter.set(status);
         this.pageChange.emit(1);
         this.emitNav({ view: 'fleet', tab: 'listagem' });
     }
@@ -375,10 +316,15 @@ export class FleetSelector {
 
     protected selectedCostMachine = computed(() => this.lathes().find((l) => l.id === this.selectedCostMachineId()));
     protected selectedCostEstimate = computed(() =>
-        this.energyEstimate().perMachine.find((m) => m.id === this.selectedCostMachineId()),
+        this.insights.energyEstimate().perMachine.find((m) => m.id === this.selectedCostMachineId()),
     );
 
     /** Trata a seleção vinda da busca interna (app-command-search): página, ação ou torno. */
+    protected onProfileAction(action: string): void {
+        if (action === 'settings') this.isSettingsOpen.set(true);
+        if (action === 'logout') this.logout.emit();
+    }
+
     protected onCommandSelect(selection: CommandSearchSelection): void {
         if (selection.kind === 'page') {
             this.goTo(selection.target as NavTarget);
@@ -414,7 +360,7 @@ export class FleetSelector {
                 this.goTo('fleet');
                 break;
             case 'filter-critical':
-                this.filter.set('critical');
+                this.listing.filter.set('critical');
                 this.goTo('fleet');
                 break;
             case 'report-efficiency':
@@ -432,144 +378,24 @@ export class FleetSelector {
         }
     }
 
-    protected allCollapsed = computed(() => {
-        const g = this.grouped();
-        return g.length > 0 && g.every(([s]) => this.collapsedSectors().has(s));
-    });
-
-    protected counts = computed(() => {
-        const l = this.lathes();
-        return {
-            operational: l.filter((x) => x.status === 'operational').length,
-            warning: l.filter((x) => x.status === 'warning').length,
-            critical: l.filter((x) => x.status === 'critical').length,
-            maintenance: l.filter((x) => x.status === 'maintenance').length,
-        };
-    });
-
-    protected alertCount = computed(() => this.counts().warning + this.counts().critical);
-
-    protected urgentAlerts = computed(() =>
-        this.lathes()
-            .filter((l) => l.status === 'critical' || l.status === 'warning')
-            .sort((a, b) => (a.status === 'critical' ? -1 : 1) - (b.status === 'critical' ? -1 : 1)),
-    );
-
-    protected maintenanceSorted = computed(() =>
-        [...this.lathes()].sort(
-            (a, b) => parseDMY(a.nextMaintenance).getTime() - parseDMY(b.nextMaintenance).getTime(),
-        ),
-    );
-
-    protected maintenanceDueSoon = computed(() => {
-        const now = new Date();
-        const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-        return this.lathes().filter((l) => {
-            const due = parseDMY(l.nextMaintenance);
-            return due.getTime() >= now.getTime() && due.getTime() <= in7Days.getTime();
-        }).length;
-    });
-
-    protected processesInProgress = computed(() => this.lathes().filter((l) => !!l.currentProcess));
-
-    protected energyEstimate = computed(() => estimateFleetEnergy(this.lathes()));
-
-    protected overview = computed(() => {
-        const l = this.lathes();
-        const avgEfficiency = Math.round(l.reduce((s, x) => s + x.efficiency, 0) / (l.length || 1));
-        const avgTemp = Math.round(l.reduce((s, x) => s + x.temperature, 0) / (l.length || 1));
-        const totalHours = l.reduce((s, x) => s + x.hoursWorked, 0);
-        const topPerformers = [...l].sort((a, b) => b.efficiency - a.efficiency).slice(0, 3);
-        return { avgEfficiency, avgTemp, totalHours: totalHours.toLocaleString('pt-BR'), topPerformers };
-    });
-
-    protected fleetEfficiencyTrend = computed(() => {
-        const histories = this.lathes()
-            .map((lathe) => this.fleetService.historyFor(lathe.id)?.efficiency ?? [])
-            .filter((series) => series.length > 0);
-        if (!histories.length) return [];
-        const length = Math.min(24, ...histories.map((series) => series.length));
-        return Array.from({ length }, (_, index) =>
-            Math.round(
-                histories.reduce((sum, series) => sum + series[series.length - length + index], 0) / histories.length,
-            ),
-        );
-    });
-
-    protected compareHistories = computed(() => {
-        this.tick();
-        return Object.fromEntries(this.lathes().map((lathe) => [lathe.id, this.fleetService.historyFor(lathe.id)]));
-    });
-
     protected toggleSector(sector: string): void {
-        const next = new Set(this.collapsedSectors());
-        next.has(sector) ? next.delete(sector) : next.add(sector);
-        this.collapsedSectors.set(next);
+        this.listing.toggleSector(sector);
     }
-
     protected toggleAllSectors(): void {
-        this.collapsedSectors.set(this.allCollapsed() ? new Set() : new Set(this.grouped().map(([s]) => s)));
+        this.listing.toggleAllSectors();
     }
 
-    // --- Subpágina de detalhe de máquina (Fase F) -------------------------------------------
-    // Vive aqui, não no componente de detalhe: ele é recriado a cada seleção/deseleção, mas os
-    // agendamentos de manutenção precisam sobreviver enquanto o usuário navega pela Frota.
-
-    protected isSchedulerOpen = signal(false);
-    protected scheduledMaintenances = signal<ScheduledMaintenance[]>([]);
-    protected typeLabel = typeLabel;
-
-    protected latheMaintenance = computed(() => {
-        const id = this.selectedLathe()?.id;
-        return this.scheduledMaintenances().filter((m) => m.machineId === id && m.status === 'scheduled');
-    });
-
-    protected latheMaintenanceResolved = computed(() => {
-        const id = this.selectedLathe()?.id;
-        return this.scheduledMaintenances().filter((m) => m.machineId === id && m.status !== 'scheduled');
-    });
-
-    protected maintenanceHistoryForSelected = computed(() =>
-        this.selectedLathe() ? maintenanceHistoryFor(this.selectedLathe()!) : [],
-    );
+    private readonly maintenance = createFleetMaintenanceState(this.selectedLathe);
+    protected readonly isSchedulerOpen = signal(false);
+    protected readonly latheMaintenance = this.maintenance.scheduled;
+    protected readonly latheMaintenanceResolved = this.maintenance.resolved;
+    protected readonly maintenanceHistoryForSelected = this.maintenance.history;
 
     protected onScheduleSubmit(data: MaintenanceData): void {
-        const entry: ScheduledMaintenance = {
-            ...data,
-            id: `mnt-${Date.now()}`,
-            scheduledAt: new Date().toISOString(),
-            status: 'scheduled',
-        };
-        const updated = [...this.scheduledMaintenances(), entry];
-        this.scheduledMaintenances.set(updated);
-
-        const latheDates = updated.filter((m) => m.machineId === data.machineId).map((m) => m.date);
-        const nearest = this.nearestUpcomingDate(latheDates);
-        if (nearest) {
-            this.fleetService.fleet.update((f) =>
-                f.map((l) => (l.id === data.machineId ? { ...l, nextMaintenance: nearest } : l)),
-            );
-        }
-
-        const lathe = this.selectedLathe();
-        this.toast.success(
-            'Manutenção agendada!',
-            `${lathe?.name} · ${formatISODate(data.date)} às ${data.time} · ${typeLabel[data.type] ?? data.type}`,
-        );
+        this.maintenance.schedule(data);
     }
 
     protected updateMaintenanceStatus(id: string, status: 'completed' | 'cancelled'): void {
-        this.scheduledMaintenances.update((list) => list.map((m) => (m.id === id ? { ...m, status } : m)));
-        this.toast.info(status === 'completed' ? 'Manutenção concluída' : 'Manutenção cancelada');
-    }
-
-    private nearestUpcomingDate(dates: string[]): string | null {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const future = dates
-            .map((d) => ({ raw: d, parsed: parseISODateLocal(d) }))
-            .filter((x) => x.parsed && x.parsed >= today)
-            .sort((a, b) => a.parsed!.getTime() - b.parsed!.getTime());
-        return future.length > 0 ? formatISODate(future[0].raw) : null;
+        this.maintenance.updateStatus(id, status);
     }
 }

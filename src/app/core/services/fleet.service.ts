@@ -41,7 +41,8 @@ function noiseFor(vibration: number): number {
 
 @Injectable({ providedIn: 'root' })
 export class FleetService {
-    readonly fleet = signal<LatheData[]>(LATHES_FLEET);
+    private readonly _fleet = signal<LatheData[]>(LATHES_FLEET);
+    readonly fleet = this._fleet.asReadonly();
     readonly tick = signal(0);
     readonly selectedLatheId = signal<string | null>(null);
 
@@ -53,6 +54,12 @@ export class FleetService {
     private intervalId: ReturnType<typeof setInterval> | null = null;
 
     constructor(private toast: ToastService) {}
+
+    updateNextMaintenance(machineId: string, date: string): void {
+        this._fleet.update((fleet) =>
+            fleet.map((lathe) => (lathe.id === machineId ? { ...lathe, nextMaintenance: date } : lathe)),
+        );
+    }
 
     historyFor(id: string): TelemetryHistory | undefined {
         return this.history.get(id);
@@ -185,7 +192,7 @@ export class FleetService {
             };
         });
 
-        this.fleet.set(next);
+        this._fleet.set(next);
         this.tick.update((t) => t + 1);
     }
 }

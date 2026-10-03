@@ -1,3 +1,4 @@
+import { Tabs, TabList, Tab, TabPanel, TabContent } from '@angular/aria/tabs';
 import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
 import {
     LatheData,
@@ -32,7 +33,7 @@ const MAINTENANCE_TYPE_META: Record<MaintenanceRecord['type'], { icon: string; b
 @Component({
     selector: 'app-fleet-machine-detail-view',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [Icon, ConfirmButton, DigitalTwin, LatheDashboard, LatheCharts],
+    imports: [Tabs, TabList, Tab, TabPanel, TabContent, Icon, ConfirmButton, DigitalTwin, LatheDashboard, LatheCharts],
     templateUrl: './fleet-machine-detail-view.html',
 })
 export class FleetMachineDetailView {

@@ -29,11 +29,11 @@
                         >{{ item.label }}</span
                     >
                 </span>
-                @if (!isSidebarCollapsed() && item.id === 'fleet' && alertCount() > 0) {
+                @if (!isSidebarCollapsed() && item.id === 'fleet' && insights.alertCount() > 0) {
                 <span
                     class="ml-3 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-[var(--status-red)] px-1.5 text-[10px] font-bold text-white"
                 >
-                    {{ alertCount() > 9 ? '9+' : alertCount() }}
+                    {{ insights.alertCount() > 9 ? '9+' : insights.alertCount() }}
                 </span>
                 }
             </button>
@@ -82,11 +82,11 @@
                 [class.text-muted-foreground]="activeNavId() !== item.id"
             >
                 <app-icon [name]="item.icon" [size]="20" />
-                @if (item.id === 'fleet' && alertCount() > 0) {
+                @if (item.id === 'fleet' && insights.alertCount() > 0) {
                 <span
                     class="absolute top-1 right-1 w-4 h-4 rounded-full bg-[var(--status-red)] text-white text-[10px] font-bold flex items-center justify-center"
                 >
-                    {{ alertCount() > 9 ? '9+' : alertCount() }}
+                    {{ insights.alertCount() > 9 ? '9+' : insights.alertCount() }}
                 </span>
                 }
             </button>
@@ -129,9 +129,11 @@
 
             <div class="relative">
                 <button
-                    (click)="isProfileMenuOpen.set(!isProfileMenuOpen())"
+                    ngMenuTrigger
+                    #profileTrigger="ngMenuTrigger"
+                    [menu]="profileMenu"
+                    type="button"
                     [attr.aria-label]="'Perfil de ' + userName()"
-                    [attr.aria-expanded]="isProfileMenuOpen()"
                     title="{{ userName() }}"
                     class="w-11 h-11 rounded-full border border-border bg-card hover:bg-secondary flex items-center justify-center transition-colors duration-150 shrink-0"
                     [class.text-foreground]="isProfileMenuOpen()"
@@ -143,34 +145,40 @@
                 @if (isProfileMenuOpen()) {
                 <!-- Backdrop invisível — fecha o popover ao clicar fora, mesmo padrão simples
                      usado aqui (sem HostListener, componente inline). -->
-                <div class="fixed inset-0 z-40" aria-hidden="true" (click)="isProfileMenuOpen.set(false)"></div>
-                <div
-                    class="absolute right-0 top-[calc(100%+8px)] z-50 w-56 border border-border/60 bg-card overflow-hidden animate-fade-in"
-                    role="menu"
-                >
-                    <div class="px-4 py-3 border-b border-border/50">
-                        <p class="text-[13px] font-semibold text-foreground truncate">{{ userName() }}</p>
-                    </div>
-                    <button
-                        type="button"
-                        role="menuitem"
-                        (click)="isProfileMenuOpen.set(false); isSettingsOpen.set(true)"
-                        class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-foreground hover:bg-secondary/40 transition-colors text-left"
-                    >
-                        <app-icon name="settings-2" [size]="15" class="text-muted-foreground" />
-                        Configurações
-                    </button>
-                    <button
-                        type="button"
-                        role="menuitem"
-                        (click)="isProfileMenuOpen.set(false); logout.emit()"
-                        class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-foreground hover:bg-secondary/40 transition-colors text-left"
-                    >
-                        <app-icon name="log-out" [size]="15" class="text-muted-foreground" />
-                        Sair
-                    </button>
-                </div>
+                <div class="fixed inset-0 z-40" aria-hidden="true" (click)="profileTrigger.close()"></div>
                 }
+                <div
+                    ngMenu
+                    #profileMenu="ngMenu"
+                    [hidden]="!profileMenu.visible()"
+                    (itemSelected)="onProfileAction($event)"
+                    aria-label="Menu do perfil"
+                    class="absolute right-0 top-[calc(100%+8px)] z-50 w-56 border border-border/60 bg-card overflow-hidden animate-fade-in"
+                >
+                    <ng-template ngMenuContent>
+                        <div class="px-4 py-3 border-b border-border/50">
+                            <p class="text-[13px] font-semibold text-foreground truncate">{{ userName() }}</p>
+                        </div>
+                        <button
+                            type="button"
+                            ngMenuItem
+                            value="settings"
+                            class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-foreground hover:bg-secondary/40 transition-colors text-left"
+                        >
+                            <app-icon name="settings-2" [size]="15" class="text-muted-foreground" />
+                            Configurações
+                        </button>
+                        <button
+                            type="button"
+                            ngMenuItem
+                            value="logout"
+                            class="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] font-medium text-foreground hover:bg-secondary/40 transition-colors text-left"
+                        >
+                            <app-icon name="log-out" [size]="15" class="text-muted-foreground" />
+                            Sair
+                        </button>
+                    </ng-template>
+                </div>
             </div>
         </div>
     </div>
@@ -206,10 +214,10 @@
             <h1 class="text-3xl md:text-5xl font-light text-foreground">Bem-vindo de volta, {{ userName() }}!</h1>
         </div>
         <app-fleet-home-view
-            [overview]="overview()"
-            [counts]="counts()"
+            [overview]="insights.overview()"
+            [counts]="insights.counts()"
             [totalCount]="lathes().length"
-            [healthTrend]="fleetEfficiencyTrend()"
+            [healthTrend]="insights.fleetEfficiencyTrend()"
             (navigate)="goTo($event)"
             (filterStatus)="goToStatus($event)"
         />
@@ -225,214 +233,254 @@
             }
         </div>
         } @if (fleetView() === 'fleet') {
-        <!-- Abas logo abaixo do cabeçalho, no mesmo layout usado em Relatórios. -->
-        <div
-            class="flex items-center gap-1 mb-6 border-b border-border overflow-x-auto overflow-y-hidden"
-            role="tablist"
-            aria-label="Seções da Frota"
-        >
-            @for (t of fleetTabs; track t.id) {
-            <button
-                role="tab"
-                [attr.aria-selected]="fleetTab() === t.id"
-                (click)="showFleetTab(t.id)"
-                class="shrink-0 whitespace-nowrap px-4 py-2.5 -mb-px text-[13px] font-semibold border-b-2 transition-colors"
-                [class.border-foreground]="fleetTab() === t.id"
-                [class.text-foreground]="fleetTab() === t.id"
-                [class.border-transparent]="fleetTab() !== t.id"
-                [class.text-muted-foreground]="fleetTab() !== t.id"
-            >
-                {{ t.label }}
-            </button>
-            }
-        </div>
-
-        <!-- Fase 2.1 (redesenho): tira dos "resquícios de 3 telas coladas" com um contexto
-             realmente compartilhado — contadores e busca acima das abas valem pras 3 seções. -->
-        <div class="flex flex-col sm:flex-row gap-3 mb-5 items-start sm:items-center">
-            <div class="relative w-full sm:flex-1 sm:min-w-[220px]">
-                <app-icon
-                    name="search"
-                    [size]="16"
-                    class="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
-                />
-                <input
-                    type="text"
-                    placeholder="Buscar por nome, modelo ou linha..."
-                    aria-label="Buscar por nome, modelo ou linha"
-                    [ngModel]="search()"
-                    (ngModelChange)="onSearchChange($event)"
-                    class="w-full bg-card border border-border focus:border-primary text-[14px] pl-11 pr-10 h-[42px] text-foreground placeholder:text-muted-foreground transition-colors outline-none"
-                />
-                @if (search()) {
-                <button
-                    type="button"
-                    (click)="onSearchChange('')"
-                    aria-label="Limpar busca"
-                    class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                    <app-icon name="x" [size]="14" />
-                </button>
-                }
-            </div>
-
-            @if (fleetTab() === 'listagem') {
-            <select
-                [ngModel]="filter()"
-                (ngModelChange)="onFilterChange($event)"
-                aria-label="Filtrar por status"
-                class="w-full sm:w-[240px] bg-card border border-border h-[42px] px-4 font-medium text-[13px] hover:bg-secondary/40 transition-colors outline-none"
-            >
-                @for (s of statusFilters; track s) {
-                <option [value]="s">
-                    {{ s === 'all' ? 'Todas as Máquinas (' + lathes().length + ')' : STATUS_META[s].label + ' (' +
-                    counts()[s] + ')' }}
-                </option>
-                }
-            </select>
-
-            @if (layoutMode() === 'grouped') {
-            <button
-                (click)="toggleAllSectors()"
-                class="shrink-0 flex items-center gap-1.5 h-[42px] px-4 border border-border bg-card hover:bg-secondary/40 text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-                <app-icon name="chevrons-up-down" [size]="14" />
-                {{ allCollapsed() ? 'Expandir tudo' : 'Recolher tudo' }}
-            </button>
-            }
-
+        <div ngTabs class="contents">
+            <!-- Abas logo abaixo do cabeçalho, no mesmo layout usado em Relatórios. -->
             <div
-                class="shrink-0 flex items-center h-[42px] border border-border bg-card"
-                role="group"
-                aria-label="Modo de visualização"
+                class="flex items-center gap-1 mb-6 border-b border-border overflow-x-auto overflow-y-hidden"
+                ngTabList
+                selectionMode="follow"
+                [selectedTab]="fleetTab()"
+                (selectedTabChange)="showFleetTab($event)"
+                aria-label="Seções da Frota"
             >
-                @for (m of layoutModes; track m.id) {
+                @for (t of fleetTabs; track t.id) {
                 <button
-                    (click)="setLayoutMode(m.id)"
-                    [attr.aria-pressed]="layoutMode() === m.id"
-                    [attr.title]="m.label"
-                    [attr.aria-label]="m.label"
-                    class="flex items-center justify-center w-10 h-full border-l border-border first:border-l-0 transition-colors"
-                    [class.bg-foreground]="layoutMode() === m.id"
-                    [class.text-background]="layoutMode() === m.id"
-                    [class.text-muted-foreground]="layoutMode() !== m.id"
-                    [class.hover:text-foreground]="layoutMode() !== m.id"
-                    [class.hover:bg-secondary]="layoutMode() !== m.id"
+                    ngTab
+                    [value]="t.id"
+                    type="button"
+                    class="shrink-0 whitespace-nowrap px-4 py-2.5 -mb-px text-[13px] font-semibold border-b-2 transition-colors"
+                    [class.border-foreground]="fleetTab() === t.id"
+                    [class.text-foreground]="fleetTab() === t.id"
+                    [class.border-transparent]="fleetTab() !== t.id"
+                    [class.text-muted-foreground]="fleetTab() !== t.id"
                 >
-                    <app-icon [name]="m.icon" [size]="15" />
+                    {{ t.label }}
                 </button>
                 }
             </div>
-            }
-        </div>
 
-        @if (fleetTab() === 'listagem') {
-        <app-fleet-listing-view
-            [totalCount]="lathes().length"
-            [filter]="filter()"
-            [layoutMode]="layoutMode()"
-            [grouped]="grouped()"
-            [flatSorted]="paginatedFlatSorted()"
-            [filtered]="filtered()"
-            [isFiltering]="isFiltering()"
-            [collapsedSectors]="collapsedSectors()"
-            [allCollapsed]="allCollapsed()"
-            [counts]="counts()"
-            [page]="currentPage()"
-            [totalPages]="totalPages()"
-            (filterChange)="onFilterChange($event)"
-            (layoutModeChange)="setLayoutMode($event)"
-            (toggleSector)="toggleSector($event)"
-            (toggleAllSectors)="toggleAllSectors()"
-            (pageChange)="onPageChange($event)"
-            (clearFilters)="clearListingFilters()"
-            (select)="select.emit($event)"
-        />
-        } @if (fleetTab() === 'alertas') {
-        <app-fleet-alerts-view
-            [urgentAlerts]="urgentAlertsFiltered()"
-            [isSearching]="isSearching()"
-            (clearSearch)="onSearchChange('')"
-            (select)="select.emit($event)"
-        />
-        } @if (fleetTab() === 'planta') {
-        <app-fleet-plant-view
-            [plantSectors]="plantSectors()"
-            [isSearching]="isSearching()"
-            (clearSearch)="onSearchChange('')"
-            (select)="select.emit($event)"
-        />
-        } } @if (fleetView() === 'maintenance') {
+            <!-- Fase 2.1 (redesenho): tira dos "resquícios de 3 telas coladas" com um contexto
+             realmente compartilhado — contadores e busca acima das abas valem pras 3 seções. -->
+            <div class="flex flex-col sm:flex-row gap-3 mb-5 items-start sm:items-center">
+                <div class="relative w-full sm:flex-1 sm:min-w-[220px]">
+                    <app-icon
+                        name="search"
+                        [size]="16"
+                        class="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    />
+                    <input
+                        type="text"
+                        placeholder="Buscar por nome, modelo ou linha..."
+                        aria-label="Buscar por nome, modelo ou linha"
+                        [ngModel]="listing.search()"
+                        (ngModelChange)="onSearchChange($event)"
+                        class="w-full bg-card border border-border focus:border-primary text-[14px] pl-11 pr-10 h-[42px] text-foreground placeholder:text-muted-foreground transition-colors outline-none"
+                    />
+                    @if (listing.search()) {
+                    <button
+                        type="button"
+                        (click)="onSearchChange('')"
+                        aria-label="Limpar busca"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        <app-icon name="x" [size]="14" />
+                    </button>
+                    }
+                </div>
+
+                @if (fleetTab() === 'listagem') {
+                <select
+                    [ngModel]="listing.filter()"
+                    (ngModelChange)="onFilterChange($event)"
+                    aria-label="Filtrar por status"
+                    class="w-full sm:w-[240px] bg-card border border-border h-[42px] px-4 font-medium text-[13px] hover:bg-secondary/40 transition-colors outline-none"
+                >
+                    @for (s of statusFilters; track s) {
+                    <option [value]="s">
+                        {{ s === 'all' ? 'Todas as Máquinas (' + lathes().length + ')' : STATUS_META[s].label + ' (' +
+                        insights.counts()[s] + ')' }}
+                    </option>
+                    }
+                </select>
+
+                @if (layoutMode() === 'grouped') {
+                <button
+                    (click)="toggleAllSectors()"
+                    class="shrink-0 flex items-center gap-1.5 h-[42px] px-4 border border-border bg-card hover:bg-secondary/40 text-[13px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <app-icon name="chevrons-up-down" [size]="14" />
+                    {{ listing.allCollapsed() ? 'Expandir tudo' : 'Recolher tudo' }}
+                </button>
+                }
+
+                <div
+                    class="shrink-0 flex items-center h-[42px] border border-border bg-card"
+                    ngToolbar
+                    ngToolbarWidgetGroup
+                    [multi]="false"
+                    (valueChange)="onLayoutSelection($event)"
+                    [value]="[layoutMode()]"
+                    [wrap]="true"
+                    aria-label="Modo de visualização"
+                >
+                    @for (m of layoutModes; track m.id) {
+                    <button
+                        ngToolbarWidget
+                        [value]="m.id"
+                        type="button"
+                        [attr.aria-pressed]="layoutMode() === m.id"
+                        [attr.title]="m.label"
+                        [attr.aria-label]="m.label"
+                        class="flex items-center justify-center w-10 h-full border-l border-border first:border-l-0 transition-colors"
+                        [class.bg-foreground]="layoutMode() === m.id"
+                        [class.text-background]="layoutMode() === m.id"
+                        [class.text-muted-foreground]="layoutMode() !== m.id"
+                        [class.hover:text-foreground]="layoutMode() !== m.id"
+                        [class.hover:bg-secondary]="layoutMode() !== m.id"
+                    >
+                        <app-icon [name]="m.icon" [size]="15" />
+                    </button>
+                    }
+                </div>
+                }
+            </div>
+
+            <div ngTabPanel value="listagem" [hidden]="fleetTab() !== 'listagem'">
+                <ng-template ngTabContent>
+                    <app-fleet-listing-view
+                        [totalCount]="lathes().length"
+                        [filter]="listing.filter()"
+                        [layoutMode]="layoutMode()"
+                        [grouped]="listing.grouped()"
+                        [flatSorted]="listing.paginatedFlatSorted()"
+                        [filtered]="listing.filtered()"
+                        [isFiltering]="listing.isFiltering()"
+                        [collapsedSectors]="listing.collapsedSectors()"
+                        [allCollapsed]="listing.allCollapsed()"
+                        [counts]="insights.counts()"
+                        [page]="listing.currentPage()"
+                        [totalPages]="listing.totalPages()"
+                        (filterChange)="onFilterChange($event)"
+                        (layoutModeChange)="setLayoutMode($event)"
+                        (toggleSector)="toggleSector($event)"
+                        (toggleAllSectors)="toggleAllSectors()"
+                        (pageChange)="onPageChange($event)"
+                        (clearFilters)="clearListingFilters()"
+                        (select)="select.emit($event)"
+                    />
+                </ng-template>
+            </div>
+            <div ngTabPanel value="alertas" [hidden]="fleetTab() !== 'alertas'">
+                <ng-template ngTabContent>
+                    <app-fleet-alerts-view
+                        [urgentAlerts]="listing.urgentAlertsFiltered()"
+                        [isSearching]="listing.isSearching()"
+                        (clearSearch)="onSearchChange('')"
+                        (select)="select.emit($event)"
+                    />
+                </ng-template>
+            </div>
+            <div ngTabPanel value="planta" [hidden]="fleetTab() !== 'planta'">
+                <ng-template ngTabContent>
+                    <app-fleet-plant-view
+                        [plantSectors]="listing.plantSectors()"
+                        [isSearching]="listing.isSearching()"
+                        (clearSearch)="onSearchChange('')"
+                        (select)="select.emit($event)"
+                    />
+                </ng-template>
+            </div>
+        </div>
+        } @if (fleetView() === 'maintenance') {
         <app-fleet-maintenance-view
-            [maintenanceSorted]="maintenanceSorted()"
+            [maintenanceSorted]="insights.maintenanceSorted()"
             (select)="selectForMaintenance.emit($event)"
         />
         } @if (fleetView() === 'reports') {
-        <!-- Fase 2.2: "Energia & Custos" virou aba dentro de Relatórios (antes item de nav separado). -->
-        <div
-            class="flex items-center gap-1 mb-6 border-b border-border"
-            role="tablist"
-            aria-label="Seções de Relatórios"
-        >
-            <button
-                role="tab"
-                [attr.aria-selected]="reportsTab() === 'relatorios'"
-                (click)="showReportsTab('relatorios')"
-                class="px-4 py-2.5 -mb-px text-[13px] font-semibold border-b-2 transition-colors"
-                [class.border-foreground]="reportsTab() === 'relatorios'"
-                [class.text-foreground]="reportsTab() === 'relatorios'"
-                [class.border-transparent]="reportsTab() !== 'relatorios'"
-                [class.text-muted-foreground]="reportsTab() !== 'relatorios'"
+        <div ngTabs class="contents">
+            <!-- Fase 2.2: "Energia & Custos" virou aba dentro de Relatórios (antes item de nav separado). -->
+            <div
+                class="flex items-center gap-1 mb-6 border-b border-border"
+                ngTabList
+                selectionMode="follow"
+                [selectedTab]="reportsTab()"
+                (selectedTabChange)="showReportsTab($event)"
+                aria-label="Seções de Relatórios"
             >
-                Relatórios
-            </button>
-            <button
-                role="tab"
-                [attr.aria-selected]="reportsTab() === 'energia'"
-                (click)="showReportsTab('energia')"
-                class="px-4 py-2.5 -mb-px text-[13px] font-semibold border-b-2 transition-colors"
-                [class.border-foreground]="reportsTab() === 'energia'"
-                [class.text-foreground]="reportsTab() === 'energia'"
-                [class.border-transparent]="reportsTab() !== 'energia'"
-                [class.text-muted-foreground]="reportsTab() !== 'energia'"
-            >
-                Energia & Custos
-            </button>
-        </div>
+                <button
+                    ngTab
+                    value="relatorios"
+                    type="button"
+                    class="px-4 py-2.5 -mb-px text-[13px] font-semibold border-b-2 transition-colors"
+                    [class.border-foreground]="reportsTab() === 'relatorios'"
+                    [class.text-foreground]="reportsTab() === 'relatorios'"
+                    [class.border-transparent]="reportsTab() !== 'relatorios'"
+                    [class.text-muted-foreground]="reportsTab() !== 'relatorios'"
+                >
+                    Relatórios
+                </button>
+                <button
+                    ngTab
+                    value="energia"
+                    type="button"
+                    class="px-4 py-2.5 -mb-px text-[13px] font-semibold border-b-2 transition-colors"
+                    [class.border-foreground]="reportsTab() === 'energia'"
+                    [class.text-foreground]="reportsTab() === 'energia'"
+                    [class.border-transparent]="reportsTab() !== 'energia'"
+                    [class.text-muted-foreground]="reportsTab() !== 'energia'"
+                >
+                    Energia & Custos
+                </button>
+            </div>
 
-        @if (reportsTab() === 'relatorios') {
-        <app-fleet-reports-view
-            [overview]="overview()"
-            [counts]="counts()"
-            [totalCount]="lathes().length"
-            [alertCount]="alertCount()"
-            [maintenanceDueSoon]="maintenanceDueSoon()"
-            [processesInProgress]="processesInProgress()"
-            (select)="select.emit($event)"
-            (navigate)="goTo($event)"
-            (openReport)="openReportDetail($event)"
-        />
-        } @if (reportsTab() === 'energia') {
-        <app-fleet-energy-view [energy]="energyEstimate()" [lathes]="lathes()" (openCost)="openCostDetail($event)" />
-        } } @if (fleetView() === 'compare') {
+            <div ngTabPanel value="relatorios" [hidden]="reportsTab() !== 'relatorios'">
+                <ng-template ngTabContent>
+                    <app-fleet-reports-view
+                        [overview]="insights.overview()"
+                        [counts]="insights.counts()"
+                        [totalCount]="lathes().length"
+                        [alertCount]="insights.alertCount()"
+                        [maintenanceDueSoon]="insights.maintenanceDueSoon()"
+                        [processesInProgress]="insights.processesInProgress()"
+                        (select)="select.emit($event)"
+                        (navigate)="goTo($event)"
+                        (openReport)="openReportDetail($event)"
+                    />
+                </ng-template>
+            </div>
+            <div ngTabPanel value="energia" [hidden]="reportsTab() !== 'energia'">
+                <ng-template ngTabContent>
+                    <app-fleet-energy-view
+                        [energy]="insights.energyEstimate()"
+                        [lathes]="lathes()"
+                        (openCost)="openCostDetail($event)"
+                    />
+                </ng-template>
+            </div>
+        </div>
+        } @if (fleetView() === 'compare') {
         <!-- Fase E: nova view de comparação entre máquinas -->
-        <app-fleet-compare-view [lathes]="lathes()" [histories]="compareHistories()" (select)="select.emit($event)" />
+        <app-fleet-compare-view
+            [lathes]="lathes()"
+            [histories]="insights.compareHistories()"
+            (select)="select.emit($event)"
+        />
         } @if (fleetView() === 'report-detail' && selectedReportKey(); as key) {
         <app-fleet-report-detail-view
             [reportKey]="key"
             [lathes]="lathes()"
-            [overview]="overview()"
-            [counts]="counts()"
-            [urgentAlerts]="urgentAlerts()"
-            [maintenanceSorted]="maintenanceSorted()"
-            [maintenanceDueSoon]="maintenanceDueSoon()"
+            [overview]="insights.overview()"
+            [counts]="insights.counts()"
+            [urgentAlerts]="insights.urgentAlerts()"
+            [maintenanceSorted]="insights.maintenanceSorted()"
+            [maintenanceDueSoon]="insights.maintenanceDueSoon()"
             (back)="goTo('reports')"
         />
         } @if (fleetView() === 'cost-detail' && selectedCostMachine(); as m) {
         <app-fleet-cost-detail-view
             [lathe]="m"
             [estimate]="selectedCostEstimate()!"
-            [energy]="energyEstimate()"
+            [energy]="insights.energyEstimate()"
             (back)="goTo('energy')"
         />
         } } }
