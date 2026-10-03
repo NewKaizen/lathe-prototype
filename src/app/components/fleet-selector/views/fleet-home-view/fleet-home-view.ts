@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { LatheStatus } from '../../../../core/models/fleet.model';
 import { STATUS_META } from '../../../../core/lib/status';
+import { Icon } from '../../../../shared/icon/icon';
 import { FleetOverviewSummary, FleetOverviewView } from '../fleet-overview-view/fleet-overview-view';
 
 @Component({
     selector: 'app-fleet-home-view',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FleetOverviewView],
+    imports: [FleetOverviewView, Icon],
     templateUrl: './fleet-home-view.html',
 })
 export class FleetHomeView {

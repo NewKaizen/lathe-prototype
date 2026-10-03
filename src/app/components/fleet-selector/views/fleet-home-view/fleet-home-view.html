@@ -12,9 +12,9 @@
                 <button
                     type="button"
                     (click)="navigate.emit('reports')"
-                    class="text-[11px] font-semibold text-primary hover:underline"
+                    class="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline"
                 >
-                    Relatórios <span aria-hidden="true">→</span>
+                    Relatórios <app-icon name="arrow-right" [size]="12" />
                 </button>
             </div>
             <svg
@@ -57,9 +57,9 @@
                 <button
                     type="button"
                     (click)="navigate.emit('fleet')"
-                    class="text-[11px] font-semibold text-primary hover:underline"
+                    class="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline"
                 >
-                    Ver frota <span aria-hidden="true">→</span>
+                    Ver frota <app-icon name="arrow-right" [size]="12" />
                 </button>
             </div>
             <div class="mt-5 flex items-center gap-5 sm:gap-7">

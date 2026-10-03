@@ -451,6 +451,50 @@
         border-left-color: var(--primary);
         font-weight: 600;
     }
+    .side-nav-link-active {
+        color: var(--primary);
+    }
+
+    /* Barra superior escura; a navegação mantém a camada cinza Carbon original. */
+    .fleet-topbar {
+        background: #161616;
+        border-bottom-color: #393939;
+    }
+    .fleet-topbar app-command-search input[aria-label='Busca interna'] {
+        background: #262626;
+        border-color: #525252;
+        color: #f4f4f4;
+    }
+    .fleet-topbar app-command-search input[aria-label='Busca interna']::placeholder {
+        color: #a8a8a8;
+        opacity: 1;
+    }
+    .fleet-topbar app-command-search > div > div > app-icon {
+        color: #c6c6c6;
+    }
+    .fleet-topbar app-command-search button[aria-label='Ver todos os comandos'] {
+        background: #262626;
+        border-color: #525252;
+        color: #c6c6c6;
+    }
+    .fleet-topbar app-command-search button[aria-label='Ver todos os comandos']:hover {
+        border-color: #8d8d8d;
+        color: #ffffff;
+    }
+    .fleet-topbar app-notifications-bell > div > button,
+    .fleet-topbar > div:last-child > div.relative > button {
+        background: #262626;
+        border-color: #525252;
+        color: #c6c6c6;
+    }
+    .fleet-topbar app-notifications-bell > div > button:hover,
+    .fleet-topbar > div:last-child > div.relative > button:hover {
+        background: #393939;
+        color: #ffffff;
+    }
+    .fleet-topbar > div:last-child > div.relative > button {
+        color: #78a9ff;
+    }
 
     /* ─── Animations (mantidas, sem exagero de easing) ──────────────────────── */
     @keyframes fade-in-up {
@@ -484,6 +528,34 @@
     }
     .animate-fade-in-up {
         animation: fade-in-up 0.2s ease forwards;
+    }
+    @keyframes toast-refresh-a {
+        0%,
+        100% {
+            background-color: var(--card);
+            transform: scale(1);
+        }
+        35% {
+            background-color: color-mix(in srgb, var(--primary) 12%, var(--card));
+            transform: scale(1.012);
+        }
+    }
+    @keyframes toast-refresh-b {
+        0%,
+        100% {
+            background-color: var(--card);
+            transform: scale(1);
+        }
+        35% {
+            background-color: color-mix(in srgb, var(--primary) 12%, var(--card));
+            transform: scale(1.012);
+        }
+    }
+    .toast-refresh-a {
+        animation: toast-refresh-a 0.7s ease-out;
+    }
+    .toast-refresh-b {
+        animation: toast-refresh-b 0.7s ease-out;
     }
     .animate-shake {
         animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);

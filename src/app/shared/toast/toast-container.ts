@@ -11,6 +11,8 @@ import { Icon } from '../icon/icon';
             @for (t of toast.toasts(); track t.id) {
                 <div
                     class="bg-card border border-border border-l-[3px] px-4 py-3 flex items-start gap-3 animate-fade-in-up"
+                    [class.toast-refresh-a]="t.refreshVersion > 0 && t.refreshVersion % 2 === 1"
+                    [class.toast-refresh-b]="t.refreshVersion > 0 && t.refreshVersion % 2 === 0"
                     [style.border-left-color]="colorOf(t.variant)"
                     role="status"
                 >
